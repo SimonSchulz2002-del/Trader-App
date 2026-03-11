@@ -886,28 +886,24 @@ html, body {
   <div class="topbar">
     <div>
       <div class="topbar-title">Tages-Briefing</div>
-      <div class="topbar-sub">11. März 2026 · KI-Analyse</div>
+      <div class="topbar-sub" id="briefing-sub">Claude KI · Live-Analyse</div>
     </div>
     <div class="topbar-right">
-      <div class="live-badge" style="background:rgba(56,217,245,0.08);border-color:rgba(56,217,245,0.2);color:var(--cyan)">
-        <div class="live-dot" style="background:var(--cyan)"></div>KI
+      <div class="live-badge" id="briefing-badge" onclick="generateBriefing()" style="cursor:pointer;background:rgba(56,217,245,0.08);border-color:rgba(56,217,245,0.2);color:var(--cyan)">
+        <div class="live-dot" style="background:var(--cyan)"></div>GENERIEREN
       </div>
     </div>
   </div>
 
   <div class="scroll-body">
-    <!-- Hero -->
     <div class="briefing-hero">
-      <div class="bh-date">📅 Mittwoch, 11. März 2026</div>
-      <div class="bh-title">Iran-Krieg Tag 12 · CPI 8:30 ET</div>
-      <div class="bh-mood">
-        <span style="padding:4px 12px;background:rgba(245,200,66,0.12);border:1px solid rgba(245,200,66,0.25);border-radius:20px;color:var(--yellow)">⚡ Risk-Off / Risk-On Mix</span>
+      <div class="bh-date" id="briefing-date">📅 Lade Datum...</div>
+      <div class="bh-title" id="briefing-title">KI Tages-Briefing</div>
+      <div class="bh-mood" id="briefing-mood">
+        <span style="padding:4px 12px;background:rgba(56,217,245,0.1);border:1px solid rgba(56,217,245,0.2);border-radius:20px;color:var(--cyan)">Tippe GENERIEREN ↗</span>
       </div>
     </div>
-
-    <!-- Sections (dynamic) -->
     <div id="briefing-sections"></div>
-
     <div style="height:12px"></div>
   </div>
 </div>
@@ -918,29 +914,39 @@ html, body {
 <div class="screen" id="screen-alerts">
   <div class="topbar">
     <div>
-      <div class="topbar-title">Alerts</div>
-      <div class="topbar-sub">Trump-Watch · Setups · Markt</div>
+      <div class="topbar-title">Trump-Watch & Alerts</div>
+      <div class="topbar-sub">KI-Analyse · Live</div>
     </div>
     <div class="topbar-right">
-      <div style="background:var(--red);color:white;font-size:11px;font-weight:700;padding:3px 9px;border-radius:12px">8</div>
+      <div id="alert-count-badge" style="background:var(--red);color:white;font-size:11px;font-weight:700;padding:3px 9px;border-radius:12px">●</div>
     </div>
   </div>
 
   <div class="scroll-body">
-    <!-- Trump Banner -->
-    <div class="trump-alert-banner">
+    <!-- Trump AI Banner -->
+    <div class="trump-alert-banner" id="trump-banner" style="cursor:pointer" onclick="analyzeTrump()">
       <div class="trump-emoji">🇺🇸</div>
       <div class="trump-info">
-        <div class="trump-label">TRUMP-WATCH AKTIV</div>
-        <div class="trump-text">"The war is pretty much complete" — Pentagon widerspricht. Öl +4% heute früh.</div>
-        <div class="trump-meta">Vor 2 Stunden · Hohe Marktrelevanz</div>
+        <div class="trump-label">TRUMP-WATCH KI</div>
+        <div class="trump-text" id="trump-banner-text">Tippe hier für KI-Analyse der neuesten Trump-Aktionen und deren Marktimpact.</div>
+        <div class="trump-meta" id="trump-banner-meta">Claude analysiert → Trading-Implikationen</div>
       </div>
     </div>
 
+    <!-- Trump AI Analysis Card -->
+    <div class="card" id="trump-analysis-card" style="display:none">
+      <div class="card-header">
+        <div class="card-title">🇺🇸 TRUMP-WATCH KI-ANALYSE</div>
+        <div style="font-size:11px;color:var(--mid);cursor:pointer" onclick="analyzeTrump()">Neu laden</div>
+      </div>
+      <div id="trump-analysis-body" style="padding:14px 16px;font-size:13px;line-height:1.7;color:var(--text)"></div>
+    </div>
+
+    <!-- Alerts List -->
     <div class="card">
       <div class="card-header">
         <div class="card-title">🔔 ALLE ALERTS</div>
-        <div style="font-size:11px;color:var(--mid)" onclick="renderAlerts()">Aktualisieren</div>
+        <div style="font-size:11px;color:var(--cyan);cursor:pointer" onclick="generateAlerts()">KI aktualisieren</div>
       </div>
       <div id="alerts-list"></div>
     </div>
@@ -1115,6 +1121,7 @@ html, body {
   " id="modal-sheet">
     <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;" onclick="closeModal()"></div>
     <div id="modal-content"></div>
+    <div id="modal-ai-section"></div>
   </div>
 </div>
 
@@ -1513,144 +1520,371 @@ function setWlFilter(f, el) {
 // ══════════════════════════════════════
 // BRIEFING
 // ══════════════════════════════════════
-const BRIEFING_DATA = [
-  {
-    id: 'markt',
-    icon: '🔴',
-    title: 'MARKTLAGE HEUTE',
-    content: `
-      <p><strong>Gestern:</strong> S&P 500 -0,21% auf 6.781, Nasdaq knapp im Plus. Chip-Aktien nach starken TSMC-Daten stark: Nvidia +1,2%, Micron +3,5%, Intel +2,6%.</p>
-      <p><strong>Futures heute:</strong> S&P +0,20% · Dow +0,20% · Nasdaq +0,17%. VIX bei 24,80.</p>
-      <div class="highlight">⚠️ Europa schwach: DAX -1,2%, FTSE -0,7% nach Iran-Bedenken. IEA plant historisch große Ölreserven-Freigabe.</div>
-      <div class="tag-row">
-        <span class="tag neut">Risk-Off/On Mix</span>
-        <span class="tag bull">Chips stark</span>
-        <span class="tag bear">Europa schwach</span>
-      </div>
-    `
-  },
-  {
-    id: 'trump',
-    icon: '🇺🇸',
-    title: 'TRUMP-WATCH',
-    content: `
-      <p><strong>Letzte 24h:</strong> Widersprüchliche Signale — Gegenüber CBS: "very complete, pretty much." Dann: "not this week."</p>
-      <div class="highlight">⚡ Pentagon widerspricht Trump öffentlich. DoD postete "We have Only Just Begun to Fight" während Trump Krieg als nahezu beendet bezeichnete.</div>
-      <p><strong>TACO-Faktor:</strong> 🟡 HOCH. Typische Ambiguität als Verhandlungstaktik. Jede Deeskalationsmeldung = Öl-Short-Squeeze.</p>
-      <div class="tag-row">
-        <span class="tag bear">Iran-Konflikt</span>
-        <span class="tag watch">Ölpreis-Volatilität</span>
-        <span class="tag bull">Rüstung Long</span>
-      </div>
-    `
-  },
-  {
-    id: 'cpi',
-    icon: '📊',
-    title: 'CPI HEUTE 8:30 ET',
-    content: `
-      <p><strong>Konsens:</strong> Headline ~2,5% YoY, Core ~2,5%. Goldman Sachs erwartet kühleren Print bei 2,42%.</p>
-      <div class="highlight">🎯 Kühler Print = bullisch für alles außer USD. Heißer Print = Stagflations-Angst. Gold gewinnt in BEIDEN Szenarien.</div>
-      <div class="tag-row">
-        <span class="tag bull">Gold beide Wege</span>
-        <span class="tag watch">Fed-Reaktion</span>
-        <span class="tag bear">Heißer Print = Risk-Off</span>
-      </div>
-    `
-  },
-  {
-    id: 'oracle',
-    icon: '💻',
-    title: 'ORACLE EARNINGS',
-    content: `
-      <p><strong>Q3 Ergebnis:</strong> Umsatz +22% auf 17,2 Mrd. $, Cloud +44% auf 8,9 Mrd. $. EPS $1,79 vs. $1,70 erwartet.</p>
-      <div class="highlight">🚀 RPO +325% auf 553 Mrd. $. FY27-Guidance auf 90 Mrd. $ angehoben. ORCL vorbörslich +10%.</div>
-      <p>Positiver Übertrag auf AWS, Azure, Google Cloud. KI-Infrastruktur-Thesis bestätigt.</p>
-      <div class="tag-row">
-        <span class="tag bull">KI-Infra Long</span>
-        <span class="tag bull">Cloud bullisch</span>
-        <span class="tag watch">ORCL +10% vorbörslich</span>
-      </div>
-    `
-  },
-  {
-    id: 'energie',
-    icon: '⛽',
-    title: 'ENERGIE & ÖLDYNAMIK',
-    content: `
-      <p><strong>Gestern:</strong> WTI -11,94% auf 83,45 $ nach Trumps Deeskalationssignalen. Heute früh Brent wieder +2,2% auf ~89,72 $.</p>
-      <div class="highlight">Straße von Hormuz: Schiffstransit -95% in Woche 1. IEA-Release = 12 Tage Ausfall ausgeglichen — kein strukturelles Fix.</div>
-      <div class="tag-row">
-        <span class="tag bull">XOM, CVX, COP Long</span>
-        <span class="tag watch">IEA-Ankündigung heute</span>
-        <span class="tag bear">Airlines Short</span>
-      </div>
-    `
-  },
-  {
-    id: 'setups',
-    icon: '🎯',
-    title: 'TOP TRADING-SETUPS',
-    content: `
-      <p><strong>1. ORCL Long</strong> — RPO 553 Mrd. $, KI-Infrastruktur-Momentum. Catalyst: Heute Premarket-Gap.</p>
-      <p><strong>2. Gold Long (GLD)</strong> — Bullisch in beide CPI-Richtungen. Technisch stark über 5.200 $.</p>
-      <p><strong>3. Öl Short (taktisch)</strong> — IEA-Release + Trump-Rhetorik. Range: Ziel 80 $. Risiko: Hormuz-Eskalation.</p>
-      <div class="highlight">🏆 Best Setup heute: RTX / LMT Long — Rüstungszyklus unabhängig vom Kriegsende strukturell bullisch.</div>
-      <div class="tag-row">
-        <span class="tag bull">ORCL · GLD · RTX</span>
-        <span class="tag bear">Öl taktisch Short</span>
-      </div>
-    `
-  },
-];
 
-function renderBriefing() {
+// ══════════════════════════════════════
+// CLAUDE KI ENGINE
+// ══════════════════════════════════════
+
+async function callClaude(systemPrompt, userPrompt, maxTokens = 1200) {
+  if (!STATE.claudeKey) {
+    showToast('⚠️ Bitte zuerst Claude API Key in Settings eintragen!');
+    navigate('settings');
+    return null;
+  }
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': STATE.claudeKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: maxTokens,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      showToast(`❌ Claude Fehler: ${err.error?.message || res.status}`);
+      return null;
+    }
+    const data = await res.json();
+    return data.content?.[0]?.text || null;
+  } catch(e) {
+    showToast('❌ Verbindungsfehler zur Claude API');
+    return null;
+  }
+}
+
+// ── TAGES-BRIEFING ──
+async function generateBriefing() {
+  if (!STATE.claudeKey) { navigate('settings'); showToast('⚠️ Claude API Key fehlt!'); return; }
+
+  const badge = document.getElementById('briefing-badge');
   const container = document.getElementById('briefing-sections');
-  container.innerHTML = '';
-  BRIEFING_DATA.forEach(sec => {
-    const el = document.createElement('div');
-    el.className = 'briefing-section';
-    el.innerHTML = `
-      <div class="bs-header" id="bsh-${sec.id}" onclick="toggleSection('${sec.id}')">
-        <span class="bs-icon">${sec.icon}</span>
-        <span class="bs-title">${sec.title}</span>
-        <span class="bs-chevron">›</span>
+  badge.innerHTML = '<div class="ai-spinner" style="width:14px;height:14px;border:2px solid rgba(56,217,245,0.3);border-top-color:var(--cyan);border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block"></div> KI lädt...';
+  badge.style.cursor = 'default';
+
+  // Build market context from live prices
+  const topMovers = [...STOCKS]
+    .filter(s => STATE.prices[s.t])
+    .sort((a,b) => Math.abs(STATE.prices[b.t].chgPct) - Math.abs(STATE.prices[a.t].chgPct))
+    .slice(0, 10)
+    .map(s => `${s.t}: ${STATE.prices[s.t].chgPct > 0 ? '+' : ''}${STATE.prices[s.t].chgPct.toFixed(2)}%`)
+    .join(', ');
+
+  const topSetups = [...STOCKS]
+    .filter(s => s.grade === 'A' || s.grade === 'B')
+    .sort((a,b) => b.score - a.score)
+    .slice(0, 8)
+    .map(s => `${s.t}(${s.grade}, RS${s.rs}, Stage${s.stage})`)
+    .join(', ');
+
+  const sectorPerf = SECTORS.map(sec => {
+    const stocks = STOCKS.filter(s => s.sid === sec.id);
+    const avg = stocks.reduce((a,s) => a + (STATE.prices[s.t]?.chgPct || s.c), 0) / stocks.length;
+    return `${sec.abbr}: ${avg >= 0 ? '+' : ''}${avg.toFixed(2)}%`;
+  }).join(', ');
+
+  const today = new Date().toLocaleDateString('de-DE', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  const system = `Du bist Professor Synapse, ein Experte für Makro-Marktanalyse und Minervini-Trading-Strategie. 
+Antworte IMMER auf Deutsch. Sei direkt, präzise, ohne Floskeln. 
+Formatiere mit HTML: <p>, <strong>, <span class="tag bull">, <span class="tag bear">, <span class="tag watch">, <span class="tag neut">.
+Nutze <div class="highlight"> für wichtige Erkenntnisse.
+Keine Anlageberatung — aber klare Einschätzungen. Max 5 kurze Abschnitte pro Sektion.`;
+
+  const prompt = `Heute ist ${today}.
+
+LIVE MARKTDATEN:
+Top Mover: ${topMovers || 'Keine Live-Daten verfügbar'}
+Sektoren: ${sectorPerf}
+Top Minervini Setups (Score A/B): ${topSetups}
+
+Erstelle ein strukturiertes Tages-Briefing mit GENAU diesen 5 JSON-Sektionen.
+Antworte NUR mit validem JSON, kein Text davor/danach:
+
+{
+  "mood": "Risk-On|Risk-Off|Neutral|Gemischt",
+  "title": "Kurzer Titel des heutigen Tages (max 40 Zeichen)",
+  "sections": [
+    {"id":"markt","icon":"🔴","title":"MARKTLAGE HEUTE","content":"<p>...</p>"},
+    {"id":"setups","icon":"🎯","title":"TOP MINERVINI SETUPS","content":"<p>...</p>"},
+    {"id":"sektoren","icon":"🌡️","title":"SEKTOR-ANALYSE","content":"<p>...</p>"},
+    {"id":"risiken","icon":"⚠️","title":"RISIKEN & WARNSIGNALE","content":"<p>...</p>"},
+    {"id":"kalender","icon":"📅","title":"KALENDER & EVENTS","content":"<p>...</p>"}
+  ]
+}`;
+
+  container.innerHTML = `<div class="ai-loading"><div class="ai-spinner"></div>Claude analysiert Marktdaten...</div>`;
+
+  const raw = await callClaude(system, prompt, 1500);
+  if (!raw) {
+    container.innerHTML = `<div class="ai-loading" style="color:var(--red)">❌ Fehler beim Generieren. Key prüfen.</div>`;
+    resetBriefingBadge();
+    return;
+  }
+
+  try {
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    // Update hero
+    const today2 = new Date().toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    document.getElementById('briefing-date').textContent = '📅 ' + today2;
+    document.getElementById('briefing-title').textContent = parsed.title || 'KI Tages-Briefing';
+    document.getElementById('briefing-sub').textContent = 'Claude · ' + new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}) + ' Uhr';
+
+    const moodColors = {
+      'Risk-On':   ['rgba(45,206,110,0.12)','rgba(45,206,110,0.25)','var(--green)','⬆️'],
+      'Risk-Off':  ['rgba(240,58,95,0.12)', 'rgba(240,58,95,0.25)', 'var(--red)',  '⬇️'],
+      'Neutral':   ['rgba(245,200,66,0.1)', 'rgba(245,200,66,0.25)','var(--yellow)','➡️'],
+      'Gemischt':  ['rgba(56,217,245,0.08)','rgba(56,217,245,0.2)', 'var(--cyan)', '↔️'],
+    };
+    const mc = moodColors[parsed.mood] || moodColors['Neutral'];
+    document.getElementById('briefing-mood').innerHTML = `<span style="padding:4px 14px;background:${mc[0]};border:1px solid ${mc[1]};border-radius:20px;color:${mc[2]}">${mc[3]} ${parsed.mood}</span>`;
+
+    // Render sections
+    container.innerHTML = '';
+    parsed.sections.forEach((sec, i) => {
+      const el = document.createElement('div');
+      el.className = 'briefing-section';
+      el.innerHTML = `
+        <div class="bs-header" id="bsh-${sec.id}" onclick="toggleSection('${sec.id}')">
+          <span class="bs-icon">${sec.icon}</span>
+          <span class="bs-title">${sec.title}</span>
+          <span class="bs-chevron">›</span>
+        </div>
+        <div class="bs-body" id="bsb-${sec.id}">${sec.content}</div>
+      `;
+      container.appendChild(el);
+      if (i === 0) setTimeout(() => toggleSection(sec.id), 50);
+    });
+
+    showToast('✅ KI-Briefing generiert!');
+    localStorage.setItem('last_briefing', JSON.stringify({ data: parsed, time: Date.now() }));
+
+  } catch(e) {
+    // Fallback: render as plain text sections
+    container.innerHTML = `
+      <div class="briefing-section">
+        <div class="bs-header open" onclick="this.nextElementSibling.classList.toggle('open');this.classList.toggle('open')">
+          <span class="bs-icon">📊</span>
+          <span class="bs-title">KI ANALYSE</span>
+          <span class="bs-chevron">›</span>
+        </div>
+        <div class="bs-body open" style="white-space:pre-wrap;font-size:12px">${raw}</div>
+      </div>`;
+    showToast('⚠️ JSON Parse-Fehler — Rohtext angezeigt');
+  }
+
+  resetBriefingBadge();
+}
+
+function resetBriefingBadge() {
+  const badge = document.getElementById('briefing-badge');
+  badge.innerHTML = '<div class="live-dot" style="background:var(--cyan)"></div>NEU';
+  badge.style.cursor = 'pointer';
+}
+
+// ── TRUMP-WATCH KI ──
+async function analyzeTrump() {
+  if (!STATE.claudeKey) { navigate('settings'); showToast('⚠️ Claude API Key fehlt!'); return; }
+
+  const banner = document.getElementById('trump-banner-text');
+  const meta   = document.getElementById('trump-banner-meta');
+  const card   = document.getElementById('trump-analysis-card');
+  const body   = document.getElementById('trump-analysis-body');
+
+  banner.textContent = 'Claude analysiert Trump-Aktionen...';
+  meta.textContent   = '⏳ Bitte warten...';
+  card.style.display = 'block';
+  body.innerHTML = `<div class="ai-loading"><div class="ai-spinner"></div>Trump-Watch KI läuft...</div>`;
+
+  const topStocks = [...STOCKS].sort((a,b) => b.score - a.score).slice(0,5).map(s=>`${s.t}(${s.n})`).join(', ');
+  const today = new Date().toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  const system = `Du bist ein geopolitischer Trading-Experte der Trumps Aktionen auf Marktrelevanz analysiert.
+Antworte auf Deutsch. Direkt, ohne Floskeln.
+Nutze HTML: <p>, <strong>, <div class="highlight">, <span class="tag bull/bear/watch/neut">.`;
+
+  const prompt = `Heute ist ${today}.
+
+Analysiere Trumps aktuelle Marktrelevanz (Iran-Krieg, Zölle, Fed-Druck, etc.) und erstelle eine Trading-Analyse.
+
+Antworte NUR mit JSON:
+{
+  "headline": "Kurze Trump-Headline heute (max 60 Zeichen)",
+  "taco_score": "HOCH|MITTEL|NIEDRIG",
+  "summary": "2-3 Sätze was Trump heute macht/sagte",
+  "market_impact": "<p>HTML-Analyse der Marktimplikationen mit Tags</p>",
+  "trading_ideas": "<p>2-3 konkrete Trading-Ideen als Reaktion auf Trump</p>",
+  "affected_assets": ["Asset1", "Asset2", "Asset3"]
+}
+
+Top Watchlist Aktien zur Referenz: ${topStocks}`;
+
+  const raw = await callClaude(system, prompt, 800);
+  if (!raw) {
+    body.innerHTML = `<p style="color:var(--red)">❌ Fehler. API Key prüfen.</p>`;
+    return;
+  }
+
+  try {
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const t = JSON.parse(clean);
+
+    const tacoColor = t.taco_score === 'HOCH' ? 'var(--red)' : t.taco_score === 'MITTEL' ? 'var(--yellow)' : 'var(--green)';
+
+    banner.textContent = t.headline || 'Trump-Watch aktiv';
+    meta.textContent   = `TACO-Faktor: ${t.taco_score} · ${new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})} Uhr`;
+
+    body.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 12px;background:var(--s2);border-radius:10px;border:1px solid var(--border)">
+        <span style="font-size:12px;font-weight:700;color:var(--mid)">TACO-FAKTOR</span>
+        <span style="font-size:14px;font-weight:800;color:${tacoColor}">${t.taco_score}</span>
+        <span style="font-size:11px;color:var(--dim);margin-left:auto">Bluff-Wahrscheinlichkeit</span>
       </div>
-      <div class="bs-body" id="bsb-${sec.id}">${sec.content}</div>
+      <p style="font-size:13px;line-height:1.6;margin-bottom:12px">${t.summary}</p>
+      <div style="font-size:12px;font-weight:700;letter-spacing:1px;color:var(--mid);text-transform:uppercase;margin-bottom:8px">MARKTIMPACT</div>
+      ${t.market_impact}
+      <div style="font-size:12px;font-weight:700;letter-spacing:1px;color:var(--mid);text-transform:uppercase;margin:12px 0 8px">TRADING-IDEEN</div>
+      ${t.trading_ideas}
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">
+        ${(t.affected_assets||[]).map(a=>`<span class="tag watch">${a}</span>`).join('')}
+      </div>
     `;
-    container.appendChild(el);
-  });
 
-  // Open first by default
-  toggleSection('markt');
+    showToast('🇺🇸 Trump-Watch aktualisiert!');
+    localStorage.setItem('last_trump', JSON.stringify({ data: t, time: Date.now() }));
+
+  } catch(e) {
+    body.innerHTML = `<div style="white-space:pre-wrap;font-size:12px;color:var(--text)">${raw}</div>`;
+  }
 }
 
-function toggleSection(id) {
-  const header = document.getElementById('bsh-' + id);
-  const body   = document.getElementById('bsb-' + id);
-  const isOpen = body.classList.contains('open');
-  body.classList.toggle('open', !isOpen);
-  header.classList.toggle('open', !isOpen);
+// ── ALERTS KI GENERIEREN ──
+async function generateAlerts() {
+  if (!STATE.claudeKey) { navigate('settings'); showToast('⚠️ Claude API Key fehlt!'); return; }
+
+  const list = document.getElementById('alerts-list');
+  list.innerHTML = `<div class="ai-loading"><div class="ai-spinner"></div>KI generiert Alerts...</div>`;
+
+  const topA = [...STOCKS].filter(s=>s.grade==='A').slice(0,5).map(s=>`${s.t}(RS${s.rs},${s.dist}%)`).join(', ');
+  const topMovers = [...STOCKS]
+    .filter(s => STATE.prices[s.t])
+    .sort((a,b) => Math.abs(STATE.prices[b.t].chgPct) - Math.abs(STATE.prices[a.t].chgPct))
+    .slice(0,5)
+    .map(s=>`${s.t}: ${STATE.prices[s.t].chgPct > 0?'+':''}${STATE.prices[s.t].chgPct.toFixed(1)}%`)
+    .join(', ');
+
+  const system = `Du bist ein Trading Alert System. Generiere präzise, actionable Alerts auf Deutsch.`;
+
+  const prompt = `Generiere 5 Trading Alerts basierend auf:
+Score-A Setups: ${topA || 'keine live Daten'}
+Top Mover heute: ${topMovers || 'keine live Daten'}
+Marktkontext: Iran-Krieg, Öl-Volatilität, KI-Boom, FOMC 18. März
+
+Antworte NUR mit JSON Array:
+[
+  {"type":"bull|bear|trump|news","title":"Titel","text":"Kurze Beschreibung (1-2 Sätze)","time":"Jetzt"},
+  ...
+]`;
+
+  const raw = await callClaude(system, prompt, 600);
+  if (!raw) { list.innerHTML = ''; renderAlerts(); return; }
+
+  try {
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const alerts = JSON.parse(clean);
+    STATE.aiAlerts = alerts;
+
+    list.innerHTML = '';
+    alerts.forEach(a => {
+      const el = document.createElement('div');
+      el.className = 'alert-item';
+      el.innerHTML = `
+        <div class="alert-dot ${a.type}"></div>
+        <div class="alert-body">
+          <div class="alert-title">${a.title}</div>
+          <div class="alert-text">${a.text}</div>
+          <div class="alert-time">${a.time}</div>
+        </div>`;
+      list.appendChild(el);
+    });
+
+    document.getElementById('alert-count-badge').textContent = alerts.length;
+    showToast(`🔔 ${alerts.length} KI-Alerts generiert`);
+    localStorage.setItem('last_alerts', JSON.stringify({ data: alerts, time: Date.now() }));
+
+  } catch(e) {
+    renderAlerts();
+  }
 }
 
-// ══════════════════════════════════════
-// ALERTS
-// ══════════════════════════════════════
-const ALERTS = [
+// ── STOCK KI ANALYSE ──
+async function analyzeStock(s) {
+  if (!STATE.claudeKey) return;
+
+  const container = document.getElementById('modal-ai-section');
+  if (!container) return;
+
+  container.innerHTML = `<div class="ai-loading" style="padding:12px 0"><div class="ai-spinner"></div>KI analysiert ${s.t}...</div>`;
+
+  const live = STATE.prices[s.t];
+  const system = `Du bist ein Minervini-Trading-Experte. Analysiere Aktien nach SEPA-Kriterien. Antworte auf Deutsch, direkt, max 4 Sätze. Nutze HTML: <p>, <strong>.`;
+
+  const prompt = `Analysiere ${s.t} (${s.n}) für einen Minervini-Trader:
+- Stage: ${s.stage} | RS: ${s.rs} | 52W-Abstand: ${s.dist}% | Vol-Surge: ${s.vol}x
+- Score: ${s.score}/100 (${s.grade}) | Sektor: ${s.sec.name} | Thema: ${s.theme}
+- Kurs: ${live ? '$' + live.c.toFixed(2) + ' (' + (live.chgPct >= 0 ? '+' : '') + live.chgPct.toFixed(2) + '%)' : '$' + s.p}
+
+Gib eine präzise Einschätzung: Ist das ein gutes Minervini-Setup? Was sind die Stärken/Schwächen? Gibt es einen konkreten Katalysator?
+Antworte NUR mit JSON: {"rating":"KAUFEN|BEOBACHTEN|MEIDEN","summary":"<p>HTML</p>","catalyst":"Ein Satz"}`;
+
+  const raw = await callClaude(system, prompt, 400);
+  if (!raw) { container.innerHTML = ''; return; }
+
+  try {
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const r = JSON.parse(clean);
+    const ratingColor = r.rating === 'KAUFEN' ? 'var(--green)' : r.rating === 'BEOBACHTEN' ? 'var(--yellow)' : 'var(--red)';
+
+    container.innerHTML = `
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-top:10px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <span style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--mid)">🤖 KI-EINSCHÄTZUNG</span>
+          <span style="font-size:12px;font-weight:800;color:${ratingColor};margin-left:auto">${r.rating}</span>
+        </div>
+        ${r.summary}
+        <div style="margin-top:8px;padding:8px 10px;background:rgba(240,192,64,0.07);border-radius:8px;font-size:12px;color:var(--mid)">
+          ⚡ ${r.catalyst}
+        </div>
+      </div>`;
+  } catch(e) {
+    container.innerHTML = `<div style="font-size:12px;padding:10px;color:var(--mid)">${raw}</div>`;
+  }
+}
+
+// ── STATIC ALERTS FALLBACK ──
+const STATIC_ALERTS = [
   { type:'trump', title:'🇺🇸 Trump-Watch Alert', text:'Trump: "War is pretty much complete" — dann Pentagon-Widerspruch. Öl volatile.', time:'Vor 2 Std.' },
-  { type:'bull',  title:'📈 ORCL +10% vorbörslich', text:'Q3 Earnings: Cloud +44%, RPO +325% auf 553 Mrd. $. KI-Infrastruktur bestätigt.', time:'Vor 4 Std.' },
-  { type:'bear',  title:'🔴 WTI -12% Crash', text:'Ölpreis kollabiert nach Trumps Deeskalationssignalen. IEA plant Notfall-Release.', time:'Vor 6 Std.' },
-  { type:'news',  title:'📊 CPI heute 8:30 ET', text:'Konsens: 2,5% Core. Goldman erwartet 2,42%. Marktbewegender Event — alle Assets betroffen.', time:'Vor 8 Std.' },
-  { type:'bull',  title:'⚡ TSMC Chip-Daten stark', text:'TSMC February Sales stark — Nvidia, AMD, AMAT ziehen vorbörslich an.', time:'Gestern' },
-  { type:'trump', title:'🇺🇸 Zoll-Androhung', text:'Trump droht zusätzliche 25% Zölle auf EU-Importe falls Verhandlungen scheitern.', time:'Gestern' },
-  { type:'bear',  title:'⚠️ Stagflations-Risiko', text:'Öl bei 90 $ + möglicher heißer CPI = Fed kann nicht schneiden. S&P Drawdown-Risiko.', time:'Gestern' },
-  { type:'bull',  title:'🏆 Rüstung strukturell bullisch', text:'RTX, LMT, NOC: Pentagon-Munitionsausgaben explodieren. 5 Mrd. $ in 2 Tagen.', time:'Vor 2 Tagen' },
+  { type:'bull',  title:'📈 ORCL +10% vorbörslich', text:'Q3: Cloud +44%, RPO +325% auf 553 Mrd. $. KI-Infrastruktur bestätigt.', time:'Vor 4 Std.' },
+  { type:'bear',  title:'🔴 WTI -12% Crash', text:'Ölpreis kollabiert nach Trumps Deeskalationssignalen.', time:'Vor 6 Std.' },
+  { type:'news',  title:'📊 CPI heute 8:30 ET', text:'Konsens: 2,5% Core. Marktbewegender Event.', time:'Vor 8 Std.' },
+  { type:'bull',  title:'🏆 Rüstung bullisch', text:'RTX, LMT, NOC: Strukturell bullisch durch Iran-Krieg.', time:'Gestern' },
 ];
 
 function renderAlerts() {
   const list = document.getElementById('alerts-list');
+  if (!list) return;
+  const alerts = STATE.aiAlerts || STATIC_ALERTS;
   list.innerHTML = '';
-  ALERTS.forEach(a => {
+  alerts.forEach(a => {
     const el = document.createElement('div');
     el.className = 'alert-item';
     el.innerHTML = `
@@ -1659,10 +1893,61 @@ function renderAlerts() {
         <div class="alert-title">${a.title}</div>
         <div class="alert-text">${a.text}</div>
         <div class="alert-time">${a.time}</div>
-      </div>
-    `;
+      </div>`;
     list.appendChild(el);
   });
+  document.getElementById('alert-count-badge').textContent = alerts.length;
+}
+
+function renderBriefing() {
+  // Check cached briefing (max 1 hour old)
+  const cached = localStorage.getItem('last_briefing');
+  if (cached) {
+    try {
+      const { data, time } = JSON.parse(cached);
+      if (Date.now() - time < 3600000) {
+        const container = document.getElementById('briefing-sections');
+        container.innerHTML = '';
+        data.sections.forEach((sec, i) => {
+          const el = document.createElement('div');
+          el.className = 'briefing-section';
+          el.innerHTML = `
+            <div class="bs-header" id="bsh-${sec.id}" onclick="toggleSection('${sec.id}')">
+              <span class="bs-icon">${sec.icon}</span>
+              <span class="bs-title">${sec.title}</span>
+              <span class="bs-chevron">›</span>
+            </div>
+            <div class="bs-body" id="bsb-${sec.id}">${sec.content}</div>`;
+          container.appendChild(el);
+          if (i === 0) setTimeout(() => toggleSection(sec.id), 50);
+        });
+        document.getElementById('briefing-title').textContent = data.title || 'KI Briefing';
+        document.getElementById('briefing-sub').textContent = 'Gecacht · ' + new Date(time).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}) + ' Uhr';
+        return;
+      }
+    } catch(e) {}
+  }
+
+  // Show prompt to generate
+  const container = document.getElementById('briefing-sections');
+  container.innerHTML = `
+    <div style="margin:0 16px">
+      <div style="background:var(--s1);border:1px dashed var(--border);border-radius:16px;padding:30px 20px;text-align:center">
+        <div style="font-size:32px;margin-bottom:12px">🤖</div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:8px">KI-Briefing generieren</div>
+        <div style="font-size:13px;color:var(--mid);margin-bottom:20px;line-height:1.6">Claude analysiert Live-Kurse, Sektoren und Top-Setups und erstellt dein persönliches Tages-Briefing.</div>
+        <div onclick="generateBriefing()" style="display:inline-block;background:var(--gold);color:var(--bg);font-weight:700;font-size:14px;padding:12px 28px;border-radius:12px;cursor:pointer">▸ Briefing generieren</div>
+      </div>
+    </div>`;
+}
+
+function toggleSection(id) {
+  const header = document.getElementById('bsh-' + id);
+  const body   = document.getElementById('bsb-' + id);
+  if (!header || !body) return;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  header.classList.toggle('open', !isOpen);
 }
 
 // ══════════════════════════════════════
@@ -1955,6 +2240,11 @@ function showStock(s) {
 
   modal.style.display = 'flex';
   setTimeout(() => modal.classList.add('visible'), 10);
+  // Trigger AI analysis if Claude key available
+  if (STATE.claudeKey) {
+    document.getElementById('modal-ai-section').innerHTML = `<div class="ai-loading" style="padding:12px 16px"><div class="ai-spinner"></div>KI analysiert ${s.t}...</div>`;
+    setTimeout(() => analyzeStock(s), 300);
+  }
 }
 
 function closeModal() {
