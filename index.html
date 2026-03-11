@@ -779,7 +779,9 @@ html, body {
       <div class="topbar-sub" id="home-date">Mittwoch, 11. März 2026</div>
     </div>
     <div class="topbar-right">
-      <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+      <div class="live-badge" id="refresh-btn" onclick="fetchLivePrices()" style="cursor:pointer">
+        <div class="live-dot"></div>LIVE
+      </div>
     </div>
   </div>
 
@@ -1363,7 +1365,11 @@ function renderDashboard() {
   grid.innerHTML = '';
   SECTORS.forEach(sec => {
     const stocks = STOCKS.filter(s => s.sid === sec.id);
-    const avg = stocks.reduce((a, s) => a + s.c, 0) / stocks.length;
+    const avg = stocks.reduce((a, s) => {
+      const live = STATE.prices[s.t];
+      return a + (live ? live.chgPct : s.c);
+    }, 0) / stocks.length;
+    const liveCount = stocks.filter(s => STATE.prices[s.t]).length;
     const cls = avg > 0.3 ? 'up' : avg < -0.3 ? 'dn' : 'flat';
     const chgCls = avg > 0 ? 'pos' : avg < 0 ? 'neg' : 'zero';
     const tile = document.createElement('div');
@@ -1371,7 +1377,7 @@ function renderDashboard() {
     tile.innerHTML = `
       <div class="st-abbr" style="color:${sec.color}">${sec.abbr}</div>
       <div class="st-chg ${chgCls}">${avg >= 0 ? '+' : ''}${avg.toFixed(2)}%</div>
-      <div class="st-etf">${sec.etf}</div>
+      <div class="st-etf" style="color:${liveCount>0?'var(--green)':'var(--dim)'}">${liveCount > 0 ? `${liveCount} live` : sec.etf}</div>
     `;
     tile.onclick = () => {
       STATE.wlSector = sec.id;
@@ -1456,18 +1462,23 @@ function renderWatchlist() {
       lastSid = s.sid;
     }
 
-    const chgCls = s.c > 0 ? 'pos' : s.c < 0 ? 'neg' : 'zero';
+    const live = STATE.prices[s.t];
+    const chgVal  = live ? live.chgPct : s.c;
+    const chgCls  = chgVal > 0 ? 'pos' : chgVal < 0 ? 'neg' : 'zero';
     const stageMap = { 1:'s1', 2:'s2', 3:'s3', 4:'s4' };
     const amp = { rs: s.rs >= 80, sepa: s.stage === 2, vol: s.vol >= 1.5 };
-
-    const price = STATE.prices[s.t] ? `$${STATE.prices[s.t].toFixed(2)}` : `$${s.p.toFixed(2)}`;
+    const priceStr = live
+      ? `$${live.c.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`
+      : `$${s.p.toFixed(2)}`;
+    const chgStr = (chgVal >= 0 ? '+' : '') + chgVal.toFixed(2) + '%';
+    const isLive = live ? '🟢' : '';
 
     const row = document.createElement('div');
     row.className = 'stock-row';
     row.innerHTML = `
       <div class="sr-badge" style="background:${s.sec.color}18;color:${s.sec.color}">${s.sec.abbr}</div>
       <div class="sr-info">
-        <div class="sr-ticker" style="color:${s.sec.color}">${s.t}</div>
+        <div class="sr-ticker" style="color:${s.sec.color}">${s.t} <span style="font-size:8px">${isLive}</span></div>
         <div class="sr-meta">
           <span class="sr-name">${s.n}</span>
           <span class="stage-tag ${stageMap[s.stage]}">Stage ${s.stage}</span>
@@ -1480,8 +1491,8 @@ function renderWatchlist() {
         </div>
       </div>
       <div class="sr-right">
-        <div class="sr-price">${price}</div>
-        <div class="sr-chg ${chgCls}">${s.c >= 0 ? '+' : ''}${s.c.toFixed(1)}%</div>
+        <div class="sr-price">${priceStr}</div>
+        <div class="sr-chg ${chgCls}">${chgStr}</div>
         <div style="margin-top:3px;text-align:right"><span class="setup-score score-${s.grade}">${s.grade}</span></div>
       </div>
     `;
@@ -1685,20 +1696,140 @@ function toggleNotif(el) {
 // ══════════════════════════════════════
 // LIVE PRICES (Finnhub)
 // ══════════════════════════════════════
+// ══════════════════════════════════════
+// LIVE PRICE ENGINE — Batched, alle 110
+// ══════════════════════════════════════
+let priceRefreshTimer = null;
+
 async function fetchLivePrices() {
   if (!STATE.apiKey) return;
-  const tickers = STOCKS.map(s => s.t).slice(0, 30); // First batch
-  for (const ticker of tickers) {
-    try {
-      const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${STATE.apiKey}`);
-      const data = await res.json();
-      if (data.c) STATE.prices[ticker] = data.c;
-    } catch(e) {}
-    await new Promise(r => setTimeout(r, 150)); // rate limit
+
+  const tickers = STOCKS.map(s => s.t);
+  const total = tickers.length;
+  let done = 0;
+
+  // Show progress bar
+  showProgressBar(0);
+  updateLiveBadge('loading');
+
+  // Process in batches of 10 with 1.1s gap (60 calls/min = 1 per sec safe)
+  const BATCH = 10;
+  const DELAY = 1100;
+
+  for (let i = 0; i < tickers.length; i += BATCH) {
+    const batch = tickers.slice(i, i + BATCH);
+
+    await Promise.all(batch.map(async ticker => {
+      try {
+        const res = await fetch(
+          `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(ticker)}&token=${STATE.apiKey}`,
+          { signal: AbortSignal.timeout(5000) }
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (data && data.c && data.c > 0) {
+          STATE.prices[ticker] = {
+            c:  data.c,           // current price
+            o:  data.o,           // open
+            h:  data.h,           // high
+            l:  data.l,           // low
+            pc: data.pc,          // prev close
+            chg: data.c - data.pc,
+            chgPct: data.pc > 0 ? ((data.c - data.pc) / data.pc * 100) : 0,
+            t:  data.t,           // timestamp
+          };
+        }
+      } catch(e) {
+        // silently skip failed tickers
+      }
+    }));
+
+    done += batch.length;
+    showProgressBar(Math.round((done / total) * 100));
+
+    // Re-render after each batch for progressive updates
+    renderWatchlist();
+    renderDashboard();
+
+    // Rate limit gap between batches
+    if (i + BATCH < tickers.length) {
+      await new Promise(r => setTimeout(r, DELAY));
+    }
   }
-  renderWatchlist();
-  renderDashboard();
-  showToast('📡 Live-Kurse aktualisiert');
+
+  hideProgressBar();
+  updateLiveBadge('live');
+  updateLastRefreshTime();
+  showToast(`📡 ${Object.keys(STATE.prices).length} Live-Kurse geladen`);
+
+  // Auto-refresh every 60 seconds
+  if (priceRefreshTimer) clearTimeout(priceRefreshTimer);
+  priceRefreshTimer = setTimeout(fetchLivePrices, 60000);
+}
+
+function getLivePrice(ticker) {
+  return STATE.prices[ticker] || null;
+}
+
+function getLiveChange(ticker, fallback) {
+  const p = STATE.prices[ticker];
+  return p ? p.chgPct : fallback;
+}
+
+function formatPrice(ticker, fallbackPrice) {
+  const p = STATE.prices[ticker];
+  return p ? `$${p.c.toLocaleString('de-DE', {minimumFractionDigits:2, maximumFractionDigits:2})}` : `$${fallbackPrice.toFixed(2)}`;
+}
+
+// Progress bar
+function showProgressBar(pct) {
+  let bar = document.getElementById('price-progress');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'price-progress';
+    bar.style.cssText = `
+      position:fixed;top:0;left:0;right:0;height:3px;z-index:500;
+      background:var(--border);transition:opacity 0.3s;
+    `;
+    bar.innerHTML = '<div id="price-progress-fill" style="height:100%;background:linear-gradient(90deg,var(--gold),var(--cyan));border-radius:1px;transition:width 0.3s;width:0%"></div>';
+    document.body.appendChild(bar);
+  }
+  bar.style.opacity = '1';
+  document.getElementById('price-progress-fill').style.width = pct + '%';
+}
+
+function hideProgressBar() {
+  const bar = document.getElementById('price-progress');
+  if (bar) {
+    document.getElementById('price-progress-fill').style.width = '100%';
+    setTimeout(() => { bar.style.opacity = '0'; }, 400);
+  }
+}
+
+function updateLiveBadge(status) {
+  const badges = document.querySelectorAll('.live-badge');
+  badges.forEach(b => {
+    const dot = b.querySelector('.live-dot');
+    if (status === 'loading') {
+      if (dot) dot.style.background = 'var(--yellow)';
+      b.style.color = 'var(--yellow)';
+      b.style.borderColor = 'rgba(245,200,66,0.3)';
+      b.style.background = 'rgba(245,200,66,0.08)';
+    } else {
+      if (dot) dot.style.background = 'var(--green)';
+      b.style.color = 'var(--green)';
+      b.style.borderColor = 'rgba(45,206,110,0.2)';
+      b.style.background = 'rgba(45,206,110,0.1)';
+    }
+  });
+}
+
+function updateLastRefreshTime() {
+  const now = new Date();
+  const t = now.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+  const el = document.getElementById('home-date');
+  if (el) el.textContent = `Aktualisiert: ${t} Uhr`;
 }
 
 // ══════════════════════════════════════
@@ -1716,11 +1847,25 @@ async function requestNotifPermission() {
 // ══════════════════════════════════════
 function showStock(s) {
   const modal = document.getElementById('stock-modal');
+  const live = STATE.prices[s.t];
+  const price = live ? live.c : s.p;
+  const chgPct = live ? live.chgPct : s.c;
+  const chgAbs = live ? live.chg : 0;
+  const chgCls = chgPct > 0 ? 'pos' : chgPct < 0 ? 'neg' : 'zero';
   const stageMap = {1:'s1',2:'s2',3:'s3',4:'s4'};
   const stageLabel = {1:'Stage 1',2:'Stage 2',3:'Stage 3',4:'Stage 4'};
-  const chgCls = s.c > 0 ? 'pos' : s.c < 0 ? 'neg' : 'zero';
   const amp = { rs: s.rs >= 80, sepa: s.stage === 2, vol: s.vol >= 1.5 };
-  const price = STATE.prices[s.t] || s.p;
+
+  const ohlcBlock = live ? `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px">
+      ${[['Eröff.', live.o], ['Hoch', live.h], ['Tief', live.l], ['Vortag', live.pc]].map(([lbl, val]) => `
+        <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:13px;font-weight:700">$${val.toFixed(2)}</div>
+          <div style="font-size:9px;color:var(--mid);margin-top:2px">${lbl}</div>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
 
   document.getElementById('modal-content').innerHTML = `
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
@@ -1735,16 +1880,18 @@ function showStock(s) {
       </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:${live?'10px':'18px'}">
       <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
-        <div style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums">$${price.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
-        <div style="font-size:11px;color:var(--mid);margin-top:2px">Kurs</div>
+        <div style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums">$${price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+        <div style="font-size:11px;color:var(--mid);margin-top:2px">${live?'🟢 Live':'Kurs (Basis)'}</div>
       </div>
       <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
-        <div style="font-size:22px;font-weight:700" class="${chgCls}">${s.c >= 0 ? '+' : ''}${s.c.toFixed(1)}%</div>
-        <div style="font-size:11px;color:var(--mid);margin-top:2px">Heute</div>
+        <div style="font-size:22px;font-weight:700" class="${chgCls}">${chgPct>=0?'+':''}${chgPct.toFixed(2)}%</div>
+        <div style="font-size:11px;color:var(--mid);margin-top:2px">${live?(chgAbs>=0?'+':'')+chgAbs.toFixed(2)+' $':'Heute'}</div>
       </div>
     </div>
+
+    ${ohlcBlock}
 
     <div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px">
       <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--mid);text-transform:uppercase;margin-bottom:14px">▸ MINERVINI KRITERIEN</div>
