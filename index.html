@@ -1,0 +1,1887 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Trader">
+<meta name="theme-color" content="#07090d">
+<title>Minervini Trader</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>/* ══════════════════════════════════════
+   MINERVINI TRADER — Mobile CSS
+   iPhone-first, PWA-optimized
+══════════════════════════════════════ */
+
+:root {
+  --bg:      #07090d;
+  --s1:      #0d1219;
+  --s2:      #111a24;
+  --s3:      #16222e;
+  --border:  #1c2d3d;
+  --gold:    #f0c040;
+  --gold2:   #d4a832;
+  --cyan:    #38d9f5;
+  --green:   #2dce6e;
+  --red:     #f03a5f;
+  --yellow:  #f5c842;
+  --orange:  #f07840;
+  --text:    #dce8f0;
+  --dim:     #3a5060;
+  --mid:     #6a8898;
+  --safe-top: env(safe-area-inset-top, 44px);
+  --safe-bot: env(safe-area-inset-bottom, 20px);
+  --nav-h:   64px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── SCREENS ── */
+.screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  padding-top: var(--safe-top);
+  padding-bottom: calc(var(--nav-h) + var(--safe-bot));
+  overflow: hidden;
+}
+.screen.active { display: flex; }
+
+/* ── SCROLLABLE CONTENT ── */
+.scroll-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.scroll-body::-webkit-scrollbar { display: none; }
+
+/* ── TOP BAR ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 8px;
+  flex-shrink: 0;
+}
+
+.topbar-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  background: linear-gradient(135deg, var(--gold), var(--cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.topbar-sub {
+  font-size: 11px;
+  color: var(--mid);
+  letter-spacing: 0.5px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(45,206,110,0.1);
+  border: 1px solid rgba(45,206,110,0.2);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--green);
+  letter-spacing: 0.5px;
+}
+
+.live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 1.4s infinite;
+}
+
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0; right: 0;
+  height: calc(var(--nav-h) + var(--safe-bot));
+  padding-bottom: var(--safe-bot);
+  background: rgba(10,14,20,0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-around;
+  z-index: 100;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 20px 0;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+  -webkit-user-select: none;
+}
+
+.nav-icon {
+  font-size: 22px;
+  line-height: 1;
+  transition: transform 0.2s;
+}
+
+.nav-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--mid);
+  transition: color 0.2s;
+}
+
+.nav-item.active .nav-label { color: var(--gold); }
+.nav-item.active .nav-icon { transform: scale(1.1); }
+.nav-item:active { transform: scale(0.92); }
+
+.nav-indicator {
+  width: 4px; height: 4px;
+  border-radius: 2px;
+  background: var(--gold);
+  opacity: 0;
+  transition: opacity 0.2s;
+  margin-top: 2px;
+}
+.nav-item.active .nav-indicator { opacity: 1; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin: 0 16px 12px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--mid);
+}
+
+/* ── DASHBOARD (HOME) ── */
+.dash-hero {
+  margin: 8px 16px 14px;
+  background: linear-gradient(135deg, #0e1a28, #111e2e);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.dash-hero::before {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(240,192,64,0.12), transparent 70%);
+}
+
+.hero-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--mid);
+  margin-bottom: 6px;
+}
+
+.hero-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--gold), var(--cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 4px;
+}
+
+.hero-sub { font-size: 13px; color: var(--mid); }
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 0 16px 12px;
+}
+
+.stat-card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 10px;
+  text-align: center;
+}
+
+.stat-val {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+
+.stat-lbl {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--mid);
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+
+.stat-card.g .stat-val { color: var(--green); }
+.stat-card.y .stat-val { color: var(--gold); }
+.stat-card.c .stat-val { color: var(--cyan); }
+.stat-card.r .stat-val { color: var(--red); }
+
+/* ── SEKTOR HEAT MAP ── */
+.sector-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 14px;
+}
+
+.sector-tile {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.sector-tile::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+}
+.sector-tile.up::after { background: var(--green); }
+.sector-tile.dn::after { background: var(--red); }
+.sector-tile.flat::after { background: var(--yellow); }
+
+.sector-tile:active { transform: scale(0.96); }
+
+.st-abbr { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+.st-chg  { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.st-etf  { font-size: 9px; color: var(--dim); margin-top: 2px; }
+.st-chg.pos { color: var(--green); }
+.st-chg.neg { color: var(--red); }
+.st-chg.zero { color: var(--yellow); }
+
+/* ── TOP SETUPS ── */
+.setup-list { padding: 0 0 4px; }
+
+.setup-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(28,45,61,0.6);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.setup-row:last-child { border-bottom: none; }
+.setup-row:active { background: rgba(56,217,245,0.04); }
+
+.setup-rank {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--dim);
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.setup-badge {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.setup-info { flex: 1; min-width: 0; }
+.setup-ticker { font-size: 14px; font-weight: 700; letter-spacing: 0.5px; }
+.setup-name   { font-size: 11px; color: var(--mid); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.setup-right { text-align: right; flex-shrink: 0; }
+.setup-score {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px; height: 20px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+}
+.setup-chg { font-size: 12px; font-weight: 700; margin-top: 3px; font-variant-numeric: tabular-nums; }
+
+.score-A { background:rgba(45,206,110,0.15); color:var(--green); }
+.score-B { background:rgba(138,223,96,0.12); color:#8adf60; }
+.score-C { background:rgba(245,200,66,0.12); color:var(--yellow); }
+.score-D { background:rgba(240,120,64,0.12); color:var(--orange); }
+.score-F { background:rgba(240,58,95,0.12);  color:var(--red); }
+
+/* ── WATCHLIST SCREEN ── */
+.wl-filter-bar {
+  display: flex;
+  gap: 6px;
+  padding: 8px 16px;
+  overflow-x: auto;
+  flex-shrink: 0;
+  -webkit-overflow-scrolling: touch;
+}
+.wl-filter-bar::-webkit-scrollbar { display: none; }
+
+.fchip {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mid);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.18s;
+  flex-shrink: 0;
+}
+.fchip.active { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+.fchip:active { transform: scale(0.94); }
+
+.search-bar {
+  margin: 4px 16px 8px;
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px 10px 38px;
+  font-size: 14px;
+  color: var(--text);
+  width: calc(100% - 32px);
+  outline: none;
+  position: relative;
+  -webkit-appearance: none;
+}
+.search-wrap { position: relative; margin: 4px 16px 8px; }
+.search-icon {
+  position: absolute;
+  left: 13px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: var(--dim);
+  pointer-events: none;
+}
+.search-bar { margin: 0; width: 100%; border-radius: 12px; }
+
+/* Stock rows */
+.stock-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  border-bottom: 1px solid rgba(28,45,61,0.5);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.stock-row:active { background: rgba(56,217,245,0.035); }
+
+.sr-badge {
+  width: 40px; height: 40px;
+  border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 800;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.sr-info { flex: 1; min-width: 0; }
+.sr-ticker { font-size: 14px; font-weight: 700; }
+.sr-meta { display: flex; gap: 6px; align-items: center; margin-top: 2px; }
+.sr-name { font-size: 11px; color: var(--mid); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
+
+.stage-tag {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.s2 { background:rgba(45,206,110,0.15); color:var(--green); }
+.s1 { background:rgba(245,200,66,0.1); color:var(--yellow); }
+.s3 { background:rgba(240,120,64,0.1); color:var(--orange); }
+.s4 { background:rgba(240,58,95,0.1); color:var(--red); }
+
+.sr-right { text-align: right; flex-shrink: 0; }
+.sr-price { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sr-chg   { font-size: 12px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.sr-chg.pos { color: var(--green); }
+.sr-chg.neg { color: var(--red); }
+.sr-chg.zero{ color: var(--yellow); }
+
+/* Ampel mini */
+.ampel-mini {
+  display: flex; gap: 3px; align-items: center;
+  margin-top: 3px;
+}
+.amp { width:7px; height:7px; border-radius:50%; }
+.amp.on  { box-shadow: 0 0 5px currentColor; }
+.amp.off { opacity: 0.15; }
+.amp.g { background:var(--green); color:var(--green); }
+.amp.y { background:var(--yellow); color:var(--yellow); }
+.amp.r { background:var(--red); color:var(--red); }
+
+/* Sector separator */
+.sec-sep {
+  padding: 8px 16px 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sec-sep-name {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.sec-sep-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.sec-sep-avg {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* ── BRIEFING SCREEN ── */
+.briefing-hero {
+  margin: 8px 16px 14px;
+  background: linear-gradient(135deg, #0e1a28, #0d1820);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 18px;
+}
+.bh-date { font-size: 11px; color: var(--mid); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.bh-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.bh-mood  { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
+
+.briefing-section {
+  margin: 0 16px 12px;
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.bs-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.bs-icon { font-size: 18px; }
+.bs-title { font-size: 14px; font-weight: 700; flex: 1; }
+.bs-chevron { font-size: 12px; color: var(--mid); transition: transform 0.2s; }
+.bs-header.open .bs-chevron { transform: rotate(90deg); }
+
+.bs-body {
+  padding: 14px 16px;
+  display: none;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text);
+}
+.bs-body.open { display: block; }
+
+.bs-body p { margin-bottom: 10px; }
+.bs-body p:last-child { margin-bottom: 0; }
+
+.highlight {
+  background: rgba(240,192,64,0.08);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 8px 8px 0;
+  padding: 10px 12px;
+  margin: 10px 0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+.tag.bull { background:rgba(45,206,110,0.12); color:var(--green); border:1px solid rgba(45,206,110,0.2); }
+.tag.bear { background:rgba(240,58,95,0.12);  color:var(--red);   border:1px solid rgba(240,58,95,0.2); }
+.tag.neut { background:rgba(245,200,66,0.1);  color:var(--yellow);border:1px solid rgba(245,200,66,0.2); }
+.tag.watch{ background:rgba(56,217,245,0.08); color:var(--cyan);  border:1px solid rgba(56,217,245,0.2); }
+
+/* AI Loading */
+.ai-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 16px;
+  color: var(--mid);
+  font-size: 13px;
+}
+.ai-spinner {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── ALERTS SCREEN ── */
+.alert-item {
+  display: flex;
+  gap: 12px;
+  padding: 13px 16px;
+  border-bottom: 1px solid rgba(28,45,61,0.5);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.alert-item:active { background: rgba(56,217,245,0.035); }
+
+.alert-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+.alert-dot.trump { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+.alert-dot.bull  { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.alert-dot.bear  { background: var(--red); box-shadow: 0 0 8px var(--red); }
+.alert-dot.news  { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+
+.alert-body { flex: 1; }
+.alert-title { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+.alert-text  { font-size: 12px; color: var(--mid); line-height: 1.45; }
+.alert-time  { font-size: 10px; color: var(--dim); margin-top: 4px; }
+
+.trump-alert-banner {
+  margin: 8px 16px 14px;
+  background: linear-gradient(135deg, rgba(240,192,64,0.1), rgba(240,192,64,0.04));
+  border: 1px solid rgba(240,192,64,0.25);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.trump-emoji { font-size: 28px; flex-shrink: 0; }
+.trump-info .trump-label { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--gold); text-transform: uppercase; margin-bottom: 4px; }
+.trump-info .trump-text  { font-size: 13px; line-height: 1.5; }
+.trump-info .trump-meta  { font-size: 11px; color: var(--mid); margin-top: 6px; }
+
+/* ── SETTINGS SCREEN ── */
+.settings-section { margin: 0 16px 20px; }
+.settings-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid); margin-bottom: 8px; padding-left: 4px; }
+
+.setting-row {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 2px;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  gap: 12px;
+  border-bottom: 1px solid rgba(28,45,61,0.5);
+}
+.setting-item:last-child { border-bottom: none; }
+
+.setting-icon { font-size: 20px; width: 28px; text-align: center; flex-shrink: 0; }
+.setting-text { flex: 1; }
+.setting-name { font-size: 14px; font-weight: 500; }
+.setting-desc { font-size: 11px; color: var(--mid); margin-top: 2px; }
+.setting-val  { font-size: 12px; color: var(--mid); }
+
+/* Toggle */
+.toggle {
+  width: 48px; height: 28px;
+  background: var(--border);
+  border-radius: 14px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.toggle.on { background: var(--green); }
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 22px; height: 22px;
+  border-radius: 11px;
+  background: white;
+  top: 3px; left: 3px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+.toggle.on::after { transform: translateX(20px); }
+
+/* API key input */
+.api-input {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 13px;
+  color: var(--text);
+  width: 100%;
+  outline: none;
+  font-family: -apple-system, monospace;
+  -webkit-appearance: none;
+  letter-spacing: 0.5px;
+}
+.api-input:focus { border-color: var(--gold); }
+.api-input::placeholder { color: var(--dim); font-family: -apple-system; letter-spacing: 0; }
+
+.btn-primary {
+  background: var(--gold);
+  color: var(--bg);
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-appearance: none;
+  letter-spacing: 0.5px;
+}
+.btn-primary:active { transform: scale(0.97); opacity: 0.9; }
+
+/* ── INSTALL BANNER ── */
+.install-banner {
+  margin: 8px 16px;
+  background: linear-gradient(135deg, rgba(56,217,245,0.08), rgba(56,217,245,0.03));
+  border: 1px solid rgba(56,217,245,0.2);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.install-icon { font-size: 24px; flex-shrink: 0; }
+.install-text .install-title { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+.install-text .install-sub   { font-size: 11px; color: var(--mid); }
+.install-close {
+  font-size: 18px;
+  color: var(--dim);
+  cursor: pointer;
+  padding: 4px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ── PAGE TRANSITIONS ── */
+@keyframes slideIn {
+  from { opacity:0; transform: translateY(10px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.screen.active { animation: slideIn 0.2s ease; }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 30px;
+  text-align: center;
+  gap: 10px;
+}
+.empty-icon { font-size: 40px; opacity: 0.4; }
+.empty-text { font-size: 14px; color: var(--mid); }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════ -->
+<!-- SCREEN: HOME (Dashboard)          -->
+<!-- ══════════════════════════════════ -->
+<div class="screen active" id="screen-home">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Minervini Trader</div>
+      <div class="topbar-sub" id="home-date">Mittwoch, 11. März 2026</div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+    </div>
+  </div>
+
+  <!-- iOS Install Banner -->
+  <div class="install-banner" id="install-banner" style="display:none">
+    <div class="install-icon">📲</div>
+    <div class="install-text">
+      <div class="install-title">App installieren</div>
+      <div class="install-sub">Tippe auf Teilen → "Zum Homescreen"</div>
+    </div>
+    <div class="install-close" onclick="document.getElementById('install-banner').style.display='none'">✕</div>
+  </div>
+
+  <div class="scroll-body">
+    <!-- Hero -->
+    <div class="dash-hero">
+      <div class="hero-label">▸ TAGES-SCREENING</div>
+      <div class="hero-title">11 Sektoren</div>
+      <div class="hero-sub">110 Aktien · SEPA · RS · 52W · Vol</div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card g">
+        <div class="stat-val" id="hs-stage2">–</div>
+        <div class="stat-lbl">Stage 2</div>
+      </div>
+      <div class="stat-card y">
+        <div class="stat-val" id="hs-rs90">–</div>
+        <div class="stat-lbl">RS ≥ 90</div>
+      </div>
+      <div class="stat-card c">
+        <div class="stat-val" id="hs-vsurge">–</div>
+        <div class="stat-lbl">Vol Surge</div>
+      </div>
+      <div class="stat-card r">
+        <div class="stat-val" id="hs-avg">–</div>
+        <div class="stat-lbl">Ø Score</div>
+      </div>
+    </div>
+
+    <!-- Sektor Heatmap -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🌡️ SEKTOR HEATMAP</div>
+        <div style="font-size:11px;color:var(--mid)">Tippen → Filter</div>
+      </div>
+      <div class="sector-grid" id="sector-heat"></div>
+    </div>
+
+    <!-- Top Setups -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🏆 TOP SETUPS HEUTE</div>
+        <div style="font-size:11px;color:var(--mid)">Nach Score</div>
+      </div>
+      <div class="setup-list" id="top-setups"></div>
+    </div>
+
+    <div style="height:12px"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ -->
+<!-- SCREEN: WATCHLIST                 -->
+<!-- ══════════════════════════════════ -->
+<div class="screen" id="screen-watchlist">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Watchlist</div>
+      <div class="topbar-sub" id="wl-count">110 Aktien</div>
+    </div>
+    <div class="topbar-right">
+      <div style="font-size:11px;font-weight:600;color:var(--mid)" onclick="STATE.wlSector='all';renderWatchlist()">Alle Sektoren</div>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="search-wrap" style="margin:4px 16px 6px">
+    <span class="search-icon">⌕</span>
+    <input class="search-bar" type="search" placeholder="Ticker, Name, Thema..." autocomplete="off"
+      oninput="STATE.wlSearch=this.value;renderWatchlist()">
+  </div>
+
+  <!-- Filters -->
+  <div class="wl-filter-bar">
+    <div class="fchip active" onclick="setWlFilter('all',this)">Alle</div>
+    <div class="fchip" onclick="setWlFilter('A',this)">🟢 Score A</div>
+    <div class="fchip" onclick="setWlFilter('B',this)">🟡 Score B</div>
+    <div class="fchip" onclick="setWlFilter('stage2',this)">📈 Stage 2</div>
+    <div class="fchip" onclick="setWlFilter('rs90',this)">⚡ RS ≥ 90</div>
+    <div class="fchip" onclick="setWlFilter('vol',this)">🔥 Vol Surge</div>
+  </div>
+
+  <div class="scroll-body" id="wl-body"></div>
+</div>
+
+<!-- ══════════════════════════════════ -->
+<!-- SCREEN: BRIEFING                  -->
+<!-- ══════════════════════════════════ -->
+<div class="screen" id="screen-briefing">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Tages-Briefing</div>
+      <div class="topbar-sub">11. März 2026 · KI-Analyse</div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-badge" style="background:rgba(56,217,245,0.08);border-color:rgba(56,217,245,0.2);color:var(--cyan)">
+        <div class="live-dot" style="background:var(--cyan)"></div>KI
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-body">
+    <!-- Hero -->
+    <div class="briefing-hero">
+      <div class="bh-date">📅 Mittwoch, 11. März 2026</div>
+      <div class="bh-title">Iran-Krieg Tag 12 · CPI 8:30 ET</div>
+      <div class="bh-mood">
+        <span style="padding:4px 12px;background:rgba(245,200,66,0.12);border:1px solid rgba(245,200,66,0.25);border-radius:20px;color:var(--yellow)">⚡ Risk-Off / Risk-On Mix</span>
+      </div>
+    </div>
+
+    <!-- Sections (dynamic) -->
+    <div id="briefing-sections"></div>
+
+    <div style="height:12px"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ -->
+<!-- SCREEN: ALERTS                    -->
+<!-- ══════════════════════════════════ -->
+<div class="screen" id="screen-alerts">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Alerts</div>
+      <div class="topbar-sub">Trump-Watch · Setups · Markt</div>
+    </div>
+    <div class="topbar-right">
+      <div style="background:var(--red);color:white;font-size:11px;font-weight:700;padding:3px 9px;border-radius:12px">8</div>
+    </div>
+  </div>
+
+  <div class="scroll-body">
+    <!-- Trump Banner -->
+    <div class="trump-alert-banner">
+      <div class="trump-emoji">🇺🇸</div>
+      <div class="trump-info">
+        <div class="trump-label">TRUMP-WATCH AKTIV</div>
+        <div class="trump-text">"The war is pretty much complete" — Pentagon widerspricht. Öl +4% heute früh.</div>
+        <div class="trump-meta">Vor 2 Stunden · Hohe Marktrelevanz</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🔔 ALLE ALERTS</div>
+        <div style="font-size:11px;color:var(--mid)" onclick="renderAlerts()">Aktualisieren</div>
+      </div>
+      <div id="alerts-list"></div>
+    </div>
+
+    <div style="height:12px"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ -->
+<!-- SCREEN: SETTINGS                  -->
+<!-- ══════════════════════════════════ -->
+<div class="screen" id="screen-settings">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Einstellungen</div>
+      <div class="topbar-sub">API Keys · Notifications</div>
+    </div>
+  </div>
+
+  <div class="scroll-body">
+    <div style="height:8px"></div>
+
+    <!-- Finnhub -->
+    <div class="settings-section">
+      <div class="settings-label">📡 Live-Kurse (Finnhub API)</div>
+      <div style="margin-bottom:8px">
+        <input class="api-input" id="finnhub-key" type="password" placeholder="Finnhub API Key eingeben..." autocomplete="off">
+      </div>
+      <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px">
+        <div style="font-size:12px;color:var(--mid);line-height:1.6">
+          🔗 Kostenloser Key: <span style="color:var(--cyan)">finnhub.io/register</span><br>
+          60 Calls/Minute · Echtzeit US-Aktien
+        </div>
+      </div>
+    </div>
+
+    <!-- Claude API -->
+    <div class="settings-section">
+      <div class="settings-label">🤖 KI-Briefing (Claude API)</div>
+      <div style="margin-bottom:8px">
+        <input class="api-input" id="claude-key" type="password" placeholder="Anthropic API Key eingeben..." autocomplete="off">
+      </div>
+      <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px">
+        <div style="font-size:12px;color:var(--mid);line-height:1.6">
+          🔗 API Key: <span style="color:var(--cyan)">console.anthropic.com</span><br>
+          Für Trump-Watch Alerts · Tages-Briefing KI
+        </div>
+      </div>
+    </div>
+
+    <!-- Save Button -->
+    <div class="settings-section">
+      <button class="btn-primary" onclick="saveKeys()">💾 API Keys speichern & Live-Daten laden</button>
+    </div>
+
+    <!-- Notifications -->
+    <div class="settings-section">
+      <div class="settings-label">🔔 Benachrichtigungen</div>
+      <div class="setting-row">
+        <div class="setting-item">
+          <div class="setting-icon">📈</div>
+          <div class="setting-text">
+            <div class="setting-name">Trump-Watch Alerts</div>
+            <div class="setting-desc">Bei marktrelevanten Trump-Aussagen</div>
+          </div>
+          <div class="toggle on" onclick="toggleNotif(this)"></div>
+        </div>
+        <div class="setting-item">
+          <div class="setting-icon">🎯</div>
+          <div class="setting-text">
+            <div class="setting-name">Setup-Alerts</div>
+            <div class="setting-desc">Neue Score-A Setups</div>
+          </div>
+          <div class="toggle on" onclick="toggleNotif(this)"></div>
+        </div>
+        <div class="setting-item">
+          <div class="setting-icon">📊</div>
+          <div class="setting-text">
+            <div class="setting-name">Tages-Briefing</div>
+            <div class="setting-desc">Täglich 8:00 Uhr</div>
+          </div>
+          <div class="toggle on" onclick="toggleNotif(this)"></div>
+        </div>
+        <div class="setting-item">
+          <div class="setting-icon">⚠️</div>
+          <div class="setting-text">
+            <div class="setting-name">Earnings-Alerts</div>
+            <div class="setting-desc">Vor wichtigen Earnings</div>
+          </div>
+          <div class="toggle" onclick="toggleNotif(this)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- App Info -->
+    <div class="settings-section">
+      <div class="settings-label">ℹ️ APP INFO</div>
+      <div class="setting-row">
+        <div class="setting-item">
+          <div class="setting-icon">📱</div>
+          <div class="setting-text">
+            <div class="setting-name">Minervini Trader PWA</div>
+            <div class="setting-desc">Version 1.0 · Schritt 1 von 4</div>
+          </div>
+        </div>
+        <div class="setting-item">
+          <div class="setting-icon">🏆</div>
+          <div class="setting-text">
+            <div class="setting-name">Strategie</div>
+            <div class="setting-desc">SEPA · RS-Rating · 52W · Vol-Surge</div>
+          </div>
+        </div>
+        <div class="setting-item">
+          <div class="setting-icon">⚠️</div>
+          <div class="setting-text">
+            <div class="setting-name">Disclaimer</div>
+            <div class="setting-desc">Keine Anlageberatung. Nur zur Information.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:12px"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ -->
+<!-- BOTTOM NAV                        -->
+<!-- ══════════════════════════════════ -->
+<nav class="bottom-nav">
+  <div class="nav-item active" id="nav-home" onclick="navigate('home')">
+    <div class="nav-icon">📊</div>
+    <div class="nav-label">Dashboard</div>
+    <div class="nav-indicator"></div>
+  </div>
+  <div class="nav-item" id="nav-watchlist" onclick="navigate('watchlist')">
+    <div class="nav-icon">👁</div>
+    <div class="nav-label">Watchlist</div>
+    <div class="nav-indicator"></div>
+  </div>
+  <div class="nav-item" id="nav-briefing" onclick="navigate('briefing')">
+    <div class="nav-icon">📰</div>
+    <div class="nav-label">Briefing</div>
+    <div class="nav-indicator"></div>
+  </div>
+  <div class="nav-item" id="nav-alerts" onclick="navigate('alerts')">
+    <div class="nav-icon">🔔</div>
+    <div class="nav-label">Alerts</div>
+    <div class="nav-indicator"></div>
+  </div>
+  <div class="nav-item" id="nav-settings" onclick="navigate('settings');renderSettings()">
+    <div class="nav-icon">⚙️</div>
+    <div class="nav-label">Settings</div>
+    <div class="nav-indicator"></div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════ -->
+<!-- STOCK DETAIL MODAL               -->
+<!-- ══════════════════════════════════ -->
+<div id="stock-modal" style="
+  display:none;position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);
+  align-items:flex-end;justify-content:center;
+  transition:opacity 0.25s;
+" onclick="if(event.target===this)closeModal()">
+  <div style="
+    background:var(--s1);border:1px solid var(--border);
+    border-radius:24px 24px 0 0;width:100%;max-width:560px;
+    max-height:85vh;overflow-y:auto;padding:20px 20px calc(var(--safe-bot) + 20px);
+    transform:translateY(100%);transition:transform 0.3s ease;
+  " id="modal-sheet">
+    <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;" onclick="closeModal()"></div>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<style>
+#stock-modal.visible { opacity:1 !important; }
+#stock-modal.visible #modal-sheet { transform:translateY(0) !important; }
+#stock-modal { opacity:0; }
+.pos { color: var(--green) !important; }
+.neg { color: var(--red) !important; }
+.zero { color: var(--yellow) !important; }
+</style>
+
+
+<script>// ═══════════════════════════════════════════
+// SECTORS
+// ═══════════════════════════════════════════
+const SECTORS = [
+  { id:'IT',  name:'Informationstechnologie', abbr:'TECH', etf:'XLK', color:'#38d9f5' },
+  { id:'HC',  name:'Gesundheitswesen',         abbr:'HLTH', etf:'XLV', color:'#2dce6e' },
+  { id:'FIN', name:'Finanzen',                 abbr:'FIN',  etf:'XLF', color:'#f0c040' },
+  { id:'CD',  name:'Nicht-Basiskonsumgüter',   abbr:'CONS', etf:'XLY', color:'#f07840' },
+  { id:'CS',  name:'Basiskonsumgüter',          abbr:'STAP', etf:'XLP', color:'#a5d6a7' },
+  { id:'IND', name:'Industrie',                abbr:'IND',  etf:'XLI', color:'#90caf9' },
+  { id:'EN',  name:'Energie',                  abbr:'ENRG', etf:'XLE', color:'#ff7043' },
+  { id:'UT',  name:'Versorger',                abbr:'UTIL', etf:'XLU', color:'#ce93d8' },
+  { id:'RE',  name:'Immobilien (REITs)',        abbr:'REIT', etf:'XLRE',color:'#80cbc4' },
+  { id:'MAT', name:'Materialien',              abbr:'MAT',  etf:'XLB', color:'#bcaaa4' },
+  { id:'COM', name:'Kommunikation',            abbr:'COMM', etf:'XLC', color:'#f48fb1' },
+];
+
+// ═══════════════════════════════════════════
+// RAW STOCK DATA
+// ═══════════════════════════════════════════
+const RAW_STOCKS = [
+  // IT
+  { sid:'IT',  t:'NVDA',  n:'Nvidia',               theme:'KI-Chips',       p:920.50,  c:1.2,  stage:2, rs:98, dist:-4,  vol:2.8 },
+  { sid:'IT',  t:'AAPL',  n:'Apple',                theme:'Consumer Tech',  p:228.30,  c:-0.3, stage:1, rs:72, dist:-12, vol:0.9 },
+  { sid:'IT',  t:'MSFT',  n:'Microsoft',            theme:'Cloud/KI',       p:445.80,  c:0.8,  stage:2, rs:88, dist:-6,  vol:1.4 },
+  { sid:'IT',  t:'AVGO',  n:'Broadcom',             theme:'KI-Chips',       p:1420.00, c:1.5,  stage:2, rs:94, dist:-3,  vol:2.1 },
+  { sid:'IT',  t:'AMD',   n:'Advanced Micro Dev.',  theme:'KI-Chips',       p:176.20,  c:0.9,  stage:2, rs:85, dist:-9,  vol:1.8 },
+  { sid:'IT',  t:'ORCL',  n:'Oracle',               theme:'Cloud',          p:198.40,  c:10.2, stage:2, rs:97, dist:-1,  vol:4.2 },
+  { sid:'IT',  t:'CRM',   n:'Salesforce',           theme:'SaaS',           p:312.10,  c:-0.5, stage:1, rs:65, dist:-18, vol:0.8 },
+  { sid:'IT',  t:'INTC',  n:'Intel',                theme:'Chips',          p:22.40,   c:2.6,  stage:4, rs:28, dist:-52, vol:1.6 },
+  { sid:'IT',  t:'AMAT',  n:'Applied Materials',    theme:'Chip-Equipment', p:195.30,  c:1.8,  stage:2, rs:82, dist:-8,  vol:1.9 },
+  { sid:'IT',  t:'NOW',   n:'ServiceNow',           theme:'KI-SaaS',        p:1045.60, c:0.3,  stage:1, rs:78, dist:-14, vol:1.1 },
+  // HC
+  { sid:'HC',  t:'LLY',   n:'Eli Lilly',            theme:'GLP-1/Biotech',  p:892.50,  c:1.1,  stage:2, rs:91, dist:-7,  vol:1.6 },
+  { sid:'HC',  t:'UNH',   n:'UnitedHealth',         theme:'Versicherung',   p:548.20,  c:-0.2, stage:1, rs:68, dist:-16, vol:0.9 },
+  { sid:'HC',  t:'JNJ',   n:'Johnson & Johnson',    theme:'Pharma',         p:162.80,  c:0.1,  stage:1, rs:55, dist:-10, vol:0.7 },
+  { sid:'HC',  t:'ABBV',  n:'AbbVie',               theme:'Immunologie',    p:198.40,  c:0.7,  stage:2, rs:86, dist:-5,  vol:1.3 },
+  { sid:'HC',  t:'MRK',   n:'Merck & Co',           theme:'Pharma',         p:125.60,  c:-0.1, stage:1, rs:60, dist:-19, vol:0.8 },
+  { sid:'HC',  t:'TMO',   n:'Thermo Fisher',        theme:'Lab-Equipment',  p:548.90,  c:0.4,  stage:1, rs:70, dist:-22, vol:1.0 },
+  { sid:'HC',  t:'ISRG',  n:'Intuitive Surgical',   theme:'MedTech',        p:578.30,  c:0.9,  stage:2, rs:88, dist:-6,  vol:1.5 },
+  { sid:'HC',  t:'BSX',   n:'Boston Scientific',    theme:'MedTech',        p:98.40,   c:0.6,  stage:2, rs:84, dist:-8,  vol:1.4 },
+  { sid:'HC',  t:'AMGN',  n:'Amgen',                theme:'Biotech',        p:315.70,  c:-0.3, stage:1, rs:58, dist:-14, vol:0.7 },
+  { sid:'HC',  t:'REGN',  n:'Regeneron',            theme:'Biotech',        p:1124.80, c:0.5,  stage:1, rs:73, dist:-20, vol:0.9 },
+  // FIN
+  { sid:'FIN', t:'JPM',   n:'JPMorgan Chase',       theme:'Großbank',       p:248.90,  c:0.6,  stage:2, rs:89, dist:-4,  vol:1.5 },
+  { sid:'FIN', t:'BRK.B', n:'Berkshire Hathaway',   theme:'Konglomerat',    p:498.20,  c:0.4,  stage:2, rs:85, dist:-6,  vol:1.2 },
+  { sid:'FIN', t:'GS',    n:'Goldman Sachs',        theme:'Investment Bank', p:598.40, c:0.8,  stage:2, rs:90, dist:-3,  vol:1.8 },
+  { sid:'FIN', t:'V',     n:'Visa',                 theme:'Zahlungen',      p:348.70,  c:0.5,  stage:2, rs:87, dist:-5,  vol:1.3 },
+  { sid:'FIN', t:'MA',    n:'Mastercard',           theme:'Zahlungen',      p:548.30,  c:0.6,  stage:2, rs:88, dist:-4,  vol:1.4 },
+  { sid:'FIN', t:'MS',    n:'Morgan Stanley',       theme:'Investment Bank', p:148.60, c:0.3,  stage:1, rs:76, dist:-11, vol:1.0 },
+  { sid:'FIN', t:'BAC',   n:'Bank of America',      theme:'Großbank',       p:48.30,   c:0.2,  stage:1, rs:66, dist:-15, vol:0.9 },
+  { sid:'FIN', t:'WFC',   n:'Wells Fargo',          theme:'Großbank',       p:82.40,   c:0.1,  stage:1, rs:62, dist:-17, vol:0.8 },
+  { sid:'FIN', t:'BX',    n:'Blackstone',           theme:'Private Equity', p:198.70,  c:0.7,  stage:2, rs:83, dist:-9,  vol:1.3 },
+  { sid:'FIN', t:'SPGI',  n:'S&P Global',           theme:'Financial Data', p:498.60,  c:0.5,  stage:2, rs:86, dist:-7,  vol:1.1 },
+  // CD
+  { sid:'CD',  t:'AMZN',  n:'Amazon',               theme:'E-Commerce',     p:228.90,  c:0.9,  stage:2, rs:87, dist:-8,  vol:1.6 },
+  { sid:'CD',  t:'TSLA',  n:'Tesla',                theme:'EV',             p:248.40,  c:-3.1, stage:4, rs:22, dist:-45, vol:2.2 },
+  { sid:'CD',  t:'HD',    n:'Home Depot',           theme:'Baumarkt',       p:378.50,  c:-0.2, stage:1, rs:64, dist:-13, vol:0.8 },
+  { sid:'CD',  t:'MCD',   n:"McDonald's",           theme:'Fast Food',      p:298.30,  c:0.1,  stage:1, rs:58, dist:-11, vol:0.7 },
+  { sid:'CD',  t:'NKE',   n:'Nike',                 theme:'Sport/Mode',     p:72.40,   c:-1.2, stage:4, rs:31, dist:-38, vol:1.4 },
+  { sid:'CD',  t:'SBUX',  n:'Starbucks',            theme:'Gastronomie',    p:98.70,   c:0.3,  stage:1, rs:67, dist:-24, vol:1.0 },
+  { sid:'CD',  t:'BKNG',  n:'Booking Holdings',     theme:'Reise',          p:4248.60, c:0.6,  stage:2, rs:81, dist:-10, vol:1.2 },
+  { sid:'CD',  t:'TJX',   n:'TJX Companies',        theme:'Discount Retail',p:128.40,  c:0.4,  stage:2, rs:84, dist:-6,  vol:1.3 },
+  { sid:'CD',  t:'GM',    n:'General Motors',       theme:'Autos',          p:48.30,   c:-0.4, stage:3, rs:48, dist:-28, vol:0.9 },
+  { sid:'CD',  t:'F',     n:'Ford Motor',           theme:'Autos/EV',       p:12.40,   c:-0.8, stage:4, rs:35, dist:-42, vol:1.1 },
+  // CS
+  { sid:'CS',  t:'WMT',   n:'Walmart',              theme:'Supermarkt',     p:98.70,   c:0.5,  stage:2, rs:86, dist:-3,  vol:1.4 },
+  { sid:'CS',  t:'PG',    n:'Procter & Gamble',     theme:'Haushalt',       p:172.40,  c:0.1,  stage:1, rs:60, dist:-9,  vol:0.7 },
+  { sid:'CS',  t:'KO',    n:'Coca-Cola',            theme:'Getränke',       p:68.30,   c:0.0,  stage:1, rs:56, dist:-8,  vol:0.6 },
+  { sid:'CS',  t:'COST',  n:'Costco',               theme:'Mitglieder-Ret.',p:948.70,  c:0.7,  stage:2, rs:88, dist:-4,  vol:1.5 },
+  { sid:'CS',  t:'PEP',   n:'PepsiCo',              theme:'Getränke/Snacks',p:148.40,  c:-0.1, stage:1, rs:54, dist:-12, vol:0.7 },
+  { sid:'CS',  t:'PM',    n:'Philip Morris',        theme:'Tabak/IQOS',     p:148.90,  c:0.6,  stage:2, rs:82, dist:-6,  vol:1.2 },
+  { sid:'CS',  t:'MO',    n:'Altria',               theme:'Tabak',          p:54.30,   c:0.2,  stage:1, rs:62, dist:-10, vol:0.8 },
+  { sid:'CS',  t:'CL',    n:'Colgate-Palmolive',    theme:'Haushalt',       p:98.40,   c:0.1,  stage:1, rs:57, dist:-7,  vol:0.6 },
+  { sid:'CS',  t:'MDLZ',  n:'Mondelez',             theme:'Snacks',         p:64.70,   c:-0.2, stage:1, rs:51, dist:-14, vol:0.7 },
+  { sid:'CS',  t:'KR',    n:'Kroger',               theme:'Supermarkt',     p:68.40,   c:0.3,  stage:1, rs:69, dist:-11, vol:0.9 },
+  // IND
+  { sid:'IND', t:'RTX',   n:'RTX Corp (Raytheon)',  theme:'Rüstung',        p:148.70,  c:1.3,  stage:2, rs:92, dist:-5,  vol:2.1 },
+  { sid:'IND', t:'LMT',   n:'Lockheed Martin',      theme:'Rüstung/F-35',   p:578.40,  c:1.1,  stage:2, rs:89, dist:-6,  vol:1.8 },
+  { sid:'IND', t:'GE',    n:'GE Aerospace',         theme:'Triebwerke',     p:248.90,  c:0.9,  stage:2, rs:87, dist:-7,  vol:1.6 },
+  { sid:'IND', t:'CAT',   n:'Caterpillar',          theme:'Baumaschinen',   p:398.40,  c:-0.3, stage:1, rs:65, dist:-14, vol:0.8 },
+  { sid:'IND', t:'HON',   n:'Honeywell',            theme:'Industrie-Tech', p:248.30,  c:0.1,  stage:1, rs:60, dist:-16, vol:0.7 },
+  { sid:'IND', t:'UPS',   n:'UPS',                  theme:'Logistik',       p:118.40,  c:-0.9, stage:4, rs:32, dist:-36, vol:1.2 },
+  { sid:'IND', t:'BA',    n:'Boeing',               theme:'Luft-/Raumfahrt',p:198.70,  c:0.7,  stage:1, rs:55, dist:-28, vol:1.3 },
+  { sid:'IND', t:'NOC',   n:'Northrop Grumman',     theme:'Rüstung/Space',  p:548.40,  c:1.0,  stage:2, rs:88, dist:-8,  vol:1.7 },
+  { sid:'IND', t:'FDX',   n:'FedEx',                theme:'Logistik',       p:298.30,  c:-0.2, stage:1, rs:58, dist:-20, vol:0.8 },
+  { sid:'IND', t:'DE',    n:'Deere & Co',           theme:'Landmaschinen',  p:448.70,  c:-0.1, stage:1, rs:62, dist:-17, vol:0.7 },
+  // EN
+  { sid:'EN',  t:'XOM',   n:'ExxonMobil',           theme:'Öl-Major',       p:128.90,  c:4.1,  stage:2, rs:93, dist:-2,  vol:2.6 },
+  { sid:'EN',  t:'CVX',   n:'Chevron',              theme:'Öl-Major',       p:178.40,  c:3.8,  stage:2, rs:91, dist:-3,  vol:2.4 },
+  { sid:'EN',  t:'COP',   n:'ConocoPhillips',       theme:'E&P',            p:148.70,  c:3.2,  stage:2, rs:89, dist:-5,  vol:2.2 },
+  { sid:'EN',  t:'SLB',   n:'SLB (Schlumberger)',   theme:'Öl-Services',    p:48.30,   c:2.1,  stage:2, rs:82, dist:-11, vol:1.8 },
+  { sid:'EN',  t:'EOG',   n:'EOG Resources',        theme:'Shale-E&P',      p:148.40,  c:2.8,  stage:2, rs:85, dist:-8,  vol:2.0 },
+  { sid:'EN',  t:'PSX',   n:'Phillips 66',          theme:'Raffinerie',     p:148.30,  c:1.4,  stage:1, rs:72, dist:-13, vol:1.3 },
+  { sid:'EN',  t:'MPC',   n:'Marathon Petroleum',   theme:'Raffinerie',     p:198.40,  c:1.6,  stage:2, rs:78, dist:-10, vol:1.5 },
+  { sid:'EN',  t:'OXY',   n:'Occidental Petroleum', theme:'E&P/Buffett',    p:64.30,   c:2.4,  stage:2, rs:83, dist:-9,  vol:1.9 },
+  { sid:'EN',  t:'HAL',   n:'Halliburton',          theme:'Öl-Services',    p:34.70,   c:1.9,  stage:2, rs:80, dist:-12, vol:1.7 },
+  { sid:'EN',  t:'DVN',   n:'Devon Energy',         theme:'Shale-E&P',      p:42.40,   c:2.3,  stage:2, rs:81, dist:-10, vol:1.8 },
+  // UT
+  { sid:'UT',  t:'NEE',   n:'NextEra Energy',       theme:'Wind/Solar',     p:78.40,   c:0.6,  stage:2, rs:80, dist:-8,  vol:1.3 },
+  { sid:'UT',  t:'SO',    n:'Southern Company',     theme:'Strom',          p:88.30,   c:0.2,  stage:1, rs:58, dist:-10, vol:0.7 },
+  { sid:'UT',  t:'DUK',   n:'Duke Energy',          theme:'Strom',          p:118.70,  c:0.1,  stage:1, rs:55, dist:-9,  vol:0.6 },
+  { sid:'UT',  t:'AEP',   n:'American Electric',    theme:'Strom',          p:108.40,  c:0.2,  stage:1, rs:57, dist:-11, vol:0.7 },
+  { sid:'UT',  t:'D',     n:'Dominion Energy',      theme:'Strom/Gas',      p:58.30,   c:0.1,  stage:1, rs:52, dist:-14, vol:0.6 },
+  { sid:'UT',  t:'SRE',   n:'Sempra',               theme:'Gas/LNG',        p:78.40,   c:0.4,  stage:1, rs:66, dist:-12, vol:0.9 },
+  { sid:'UT',  t:'PCG',   n:'PG&E',                 theme:'Strom Westküste',p:18.70,   c:0.3,  stage:1, rs:63, dist:-18, vol:0.8 },
+  { sid:'UT',  t:'EXC',   n:'Exelon',               theme:'Nuklear/Strom',  p:44.30,   c:0.1,  stage:1, rs:54, dist:-12, vol:0.6 },
+  { sid:'UT',  t:'ED',    n:'Consolidated Edison',  theme:'NYC Versorger',  p:98.40,   c:0.0,  stage:1, rs:50, dist:-8,  vol:0.5 },
+  { sid:'UT',  t:'VST',   n:'Vistra Energy',        theme:'Strom/KI-Power', p:148.70,  c:0.8,  stage:2, rs:85, dist:-6,  vol:1.5 },
+  // RE
+  { sid:'RE',  t:'PLD',   n:'Prologis',             theme:'Logistik-REITs', p:118.40,  c:0.5,  stage:2, rs:82, dist:-9,  vol:1.3 },
+  { sid:'RE',  t:'AMT',   n:'American Tower',       theme:'Mobilfunk-Tower',p:208.30,  c:0.2,  stage:1, rs:65, dist:-16, vol:0.8 },
+  { sid:'RE',  t:'EQIX',  n:'Equinix',              theme:'Data Center',    p:948.70,  c:0.7,  stage:2, rs:84, dist:-7,  vol:1.4 },
+  { sid:'RE',  t:'CCI',   n:'Crown Castle',         theme:'Mobilfunk-Tower',p:98.40,   c:-0.6, stage:4, rs:38, dist:-32, vol:1.0 },
+  { sid:'RE',  t:'SPG',   n:'Simon Property',       theme:'Shopping Malls', p:178.30,  c:0.3,  stage:1, rs:62, dist:-14, vol:0.8 },
+  { sid:'RE',  t:'O',     n:'Realty Income',        theme:'Net Lease',      p:58.40,   c:0.1,  stage:1, rs:55, dist:-11, vol:0.6 },
+  { sid:'RE',  t:'DLR',   n:'Digital Realty',       theme:'Data Center',    p:178.70,  c:0.6,  stage:2, rs:81, dist:-10, vol:1.3 },
+  { sid:'RE',  t:'WELL',  n:'Welltower',            theme:'Healthcare REIT',p:128.40,  c:0.8,  stage:2, rs:86, dist:-5,  vol:1.5 },
+  { sid:'RE',  t:'PSA',   n:'Public Storage',       theme:'Self-Storage',   p:348.30,  c:0.2,  stage:1, rs:60, dist:-13, vol:0.7 },
+  { sid:'RE',  t:'VICI',  n:'VICI Properties',      theme:'Casino-REITs',   p:34.70,   c:0.1,  stage:1, rs:57, dist:-10, vol:0.6 },
+  // MAT
+  { sid:'MAT', t:'LIN',   n:'Linde',                theme:'Industriegase',  p:498.40,  c:0.4,  stage:2, rs:82, dist:-8,  vol:1.2 },
+  { sid:'MAT', t:'FCX',   n:'Freeport-McMoRan',     theme:'Kupfer/Gold',    p:48.70,   c:2.1,  stage:2, rs:87, dist:-6,  vol:2.0 },
+  { sid:'MAT', t:'NEM',   n:'Newmont',              theme:'Gold',           p:58.40,   c:0.9,  stage:2, rs:84, dist:-7,  vol:1.6 },
+  { sid:'MAT', t:'APD',   n:'Air Products',         theme:'Wasserstoff',    p:298.30,  c:0.2,  stage:1, rs:62, dist:-15, vol:0.8 },
+  { sid:'MAT', t:'SHW',   n:'Sherwin-Williams',     theme:'Farben',         p:398.40,  c:0.1,  stage:1, rs:60, dist:-12, vol:0.7 },
+  { sid:'MAT', t:'ECL',   n:'Ecolab',               theme:'Chemie/Wasser',  p:248.70,  c:0.2,  stage:1, rs:63, dist:-10, vol:0.7 },
+  { sid:'MAT', t:'NUE',   n:'Nucor',                theme:'Stahl',          p:148.30,  c:0.5,  stage:1, rs:68, dist:-18, vol:1.1 },
+  { sid:'MAT', t:'ALB',   n:'Albemarle',            theme:'Lithium',        p:78.40,   c:-1.8, stage:4, rs:24, dist:-58, vol:1.4 },
+  { sid:'MAT', t:'PKG',   n:'Packaging Corp',       theme:'Verpackung',     p:218.30,  c:0.1,  stage:1, rs:59, dist:-11, vol:0.6 },
+  { sid:'MAT', t:'MOS',   n:'The Mosaic Co',        theme:'Düngemittel',    p:28.40,   c:-0.3, stage:3, rs:42, dist:-25, vol:0.8 },
+  // COM
+  { sid:'COM', t:'GOOGL', n:'Alphabet',             theme:'KI/Search/Cloud',p:178.40,  c:0.7,  stage:2, rs:88, dist:-5,  vol:1.5 },
+  { sid:'COM', t:'META',  n:'Meta Platforms',       theme:'Social/KI',      p:648.70,  c:1.2,  stage:2, rs:95, dist:-2,  vol:2.2 },
+  { sid:'COM', t:'NFLX',  n:'Netflix',              theme:'Streaming',      p:998.40,  c:0.9,  stage:2, rs:92, dist:-4,  vol:1.8 },
+  { sid:'COM', t:'DIS',   n:'Disney',               theme:'Streaming/Parks',p:118.30,  c:0.2,  stage:1, rs:63, dist:-19, vol:0.9 },
+  { sid:'COM', t:'T',     n:'AT&T',                 theme:'Telekom',        p:22.40,   c:-0.1, stage:1, rs:52, dist:-14, vol:0.7 },
+  { sid:'COM', t:'VZ',    n:'Verizon',              theme:'Telekom',        p:42.30,   c:-0.4, stage:4, rs:36, dist:-22, vol:0.8 },
+  { sid:'COM', t:'TMUS',  n:'T-Mobile US',          theme:'Telekom',        p:248.70,  c:0.6,  stage:2, rs:84, dist:-6,  vol:1.3 },
+  { sid:'COM', t:'SPOT',  n:'Spotify',              theme:'Audio-Streaming',p:548.40,  c:1.1,  stage:2, rs:90, dist:-4,  vol:1.7 },
+  { sid:'COM', t:'SNAP',  n:'Snap',                 theme:'Social Media',   p:12.30,   c:-1.4, stage:4, rs:28, dist:-48, vol:1.5 },
+  { sid:'COM', t:'PARA',  n:'Paramount Global',     theme:'Streaming/TV',   p:14.70,   c:0.3,  stage:3, rs:44, dist:-30, vol:0.9 },
+];
+
+// ═══════════════════════════════════════════
+// MINERVINI SCORING
+// ═══════════════════════════════════════════
+function calcScore(d) {
+  let pts = 0;
+  // SEPA Stage (0–30)
+  if (d.stage === 2) pts += 30;
+  else if (d.stage === 1) pts += 15;
+  else if (d.stage === 3) pts += 8;
+  // RS Rating (0–35)
+  pts += Math.round((d.rs / 100) * 35);
+  // 52W Distance (0–20)
+  pts += Math.min(20, Math.max(0, 20 + d.dist * 0.4));
+  // Volume (0–15)
+  if (d.vol >= 2.0) pts += 15;
+  else if (d.vol >= 1.5) pts += 10;
+  else if (d.vol >= 1.0) pts += 5;
+  return Math.min(100, Math.round(pts));
+}
+
+function scoreGrade(s) {
+  if (s >= 85) return 'A';
+  if (s >= 70) return 'B';
+  if (s >= 55) return 'C';
+  if (s >= 40) return 'D';
+  return 'F';
+}
+
+function stageLabel(s) {
+  return ['', 'Stage 1', 'Stage 2', 'Stage 3', 'Stage 4'][s] || '–';
+}
+
+function rsColor(rs) {
+  if (rs >= 90) return '#2dce6e';
+  if (rs >= 75) return '#8adf60';
+  if (rs >= 60) return '#f5c842';
+  if (rs >= 45) return '#f07840';
+  return '#f03a5f';
+}
+
+// Enrich all stocks
+const STOCKS = RAW_STOCKS.map(d => {
+  const sec = SECTORS.find(s => s.id === d.sid);
+  const score = calcScore(d);
+  return { ...d, sec, score, grade: scoreGrade(score) };
+});
+
+// ══════════════════════════════════════
+// APP STATE
+// ══════════════════════════════════════
+const STATE = {
+  screen: 'home',
+  wlFilter: 'all',
+  wlSector: 'all',
+  wlSearch: '',
+  apiKey: localStorage.getItem('finnhub_key') || '',
+  claudeKey: localStorage.getItem('claude_key') || '',
+  notifications: JSON.parse(localStorage.getItem('notifs') || 'true'),
+  prices: {},
+  briefingOpen: {},
+};
+
+// ══════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════
+function navigate(screen) {
+  STATE.screen = screen;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + screen).classList.add('active');
+  document.getElementById('nav-' + screen).classList.add('active');
+}
+
+// ══════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════
+function renderDashboard() {
+  // Header stats
+  const stage2 = STOCKS.filter(s => s.stage === 2).length;
+  const rs90   = STOCKS.filter(s => s.rs >= 90).length;
+  const volS   = STOCKS.filter(s => s.vol >= 1.5).length;
+  const avgScore = Math.round(STOCKS.reduce((a, s) => a + s.score, 0) / STOCKS.length);
+
+  document.getElementById('hs-stage2').textContent = stage2;
+  document.getElementById('hs-rs90').textContent   = rs90;
+  document.getElementById('hs-vsurge').textContent  = volS;
+  document.getElementById('hs-avg').textContent     = avgScore;
+
+  // Sector heatmap
+  const grid = document.getElementById('sector-heat');
+  grid.innerHTML = '';
+  SECTORS.forEach(sec => {
+    const stocks = STOCKS.filter(s => s.sid === sec.id);
+    const avg = stocks.reduce((a, s) => a + s.c, 0) / stocks.length;
+    const cls = avg > 0.3 ? 'up' : avg < -0.3 ? 'dn' : 'flat';
+    const chgCls = avg > 0 ? 'pos' : avg < 0 ? 'neg' : 'zero';
+    const tile = document.createElement('div');
+    tile.className = `sector-tile ${cls}`;
+    tile.innerHTML = `
+      <div class="st-abbr" style="color:${sec.color}">${sec.abbr}</div>
+      <div class="st-chg ${chgCls}">${avg >= 0 ? '+' : ''}${avg.toFixed(2)}%</div>
+      <div class="st-etf">${sec.etf}</div>
+    `;
+    tile.onclick = () => {
+      STATE.wlSector = sec.id;
+      STATE.wlFilter = 'all';
+      navigate('watchlist');
+      renderWatchlist();
+    };
+    grid.appendChild(tile);
+  });
+
+  // Top setups
+  const top = [...STOCKS].sort((a, b) => b.score - a.score).slice(0, 8);
+  const list = document.getElementById('top-setups');
+  list.innerHTML = '';
+  top.forEach((s, i) => {
+    const chgCls = s.c > 0 ? 'pos' : s.c < 0 ? 'neg' : 'zero';
+    const row = document.createElement('div');
+    row.className = 'setup-row';
+    row.innerHTML = `
+      <div class="setup-rank">${i + 1}</div>
+      <div class="setup-badge" style="background:${s.sec.color}18;color:${s.sec.color}">${s.sec.abbr}</div>
+      <div class="setup-info">
+        <div class="setup-ticker" style="color:${s.sec.color}">${s.t}</div>
+        <div class="setup-name">${s.n}</div>
+      </div>
+      <div class="setup-right">
+        <div class="setup-score score-${s.grade}">${s.grade}</div>
+        <div class="setup-chg ${chgCls}">${s.c >= 0 ? '+' : ''}${s.c.toFixed(1)}%</div>
+      </div>
+    `;
+    row.onclick = () => showStock(s);
+    list.appendChild(row);
+  });
+}
+
+// ══════════════════════════════════════
+// WATCHLIST
+// ══════════════════════════════════════
+function renderWatchlist() {
+  let data = [...STOCKS];
+
+  // Sector filter
+  if (STATE.wlSector !== 'all') data = data.filter(s => s.sid === STATE.wlSector);
+
+  // Score/signal filter
+  if (STATE.wlFilter === 'A') data = data.filter(s => s.grade === 'A');
+  else if (STATE.wlFilter === 'B') data = data.filter(s => s.grade === 'B');
+  else if (STATE.wlFilter === 'stage2') data = data.filter(s => s.stage === 2);
+  else if (STATE.wlFilter === 'rs90') data = data.filter(s => s.rs >= 90);
+  else if (STATE.wlFilter === 'vol') data = data.filter(s => s.vol >= 1.5);
+
+  // Search
+  if (STATE.wlSearch) {
+    const q = STATE.wlSearch.toLowerCase();
+    data = data.filter(s =>
+      s.t.toLowerCase().includes(q) ||
+      s.n.toLowerCase().includes(q) ||
+      s.theme.toLowerCase().includes(q)
+    );
+  }
+
+  // Sort by score desc
+  data.sort((a, b) => b.score - a.score);
+
+  const body = document.getElementById('wl-body');
+  body.innerHTML = '';
+  let lastSid = null;
+
+  data.forEach(s => {
+    // Sector separator
+    if (s.sid !== lastSid && STATE.wlSector === 'all') {
+      const avgScore = Math.round(STOCKS.filter(x => x.sid === s.sid).reduce((a, x) => a + x.score, 0) / 10);
+      const scoreColor = avgScore >= 70 ? 'var(--green)' : avgScore >= 55 ? 'var(--yellow)' : 'var(--red)';
+      const sep = document.createElement('div');
+      sep.className = 'sec-sep';
+      sep.innerHTML = `
+        <div class="sec-sep-name" style="color:${s.sec.color}">${s.sec.abbr}</div>
+        <div class="sec-sep-line"></div>
+        <div class="sec-sep-avg" style="color:${scoreColor}">Ø ${avgScore}pts</div>
+      `;
+      body.appendChild(sep);
+      lastSid = s.sid;
+    }
+
+    const chgCls = s.c > 0 ? 'pos' : s.c < 0 ? 'neg' : 'zero';
+    const stageMap = { 1:'s1', 2:'s2', 3:'s3', 4:'s4' };
+    const amp = { rs: s.rs >= 80, sepa: s.stage === 2, vol: s.vol >= 1.5 };
+
+    const price = STATE.prices[s.t] ? `$${STATE.prices[s.t].toFixed(2)}` : `$${s.p.toFixed(2)}`;
+
+    const row = document.createElement('div');
+    row.className = 'stock-row';
+    row.innerHTML = `
+      <div class="sr-badge" style="background:${s.sec.color}18;color:${s.sec.color}">${s.sec.abbr}</div>
+      <div class="sr-info">
+        <div class="sr-ticker" style="color:${s.sec.color}">${s.t}</div>
+        <div class="sr-meta">
+          <span class="sr-name">${s.n}</span>
+          <span class="stage-tag ${stageMap[s.stage]}">Stage ${s.stage}</span>
+        </div>
+        <div class="ampel-mini">
+          <div class="amp g ${amp.rs ? 'on' : 'off'}"></div>
+          <div class="amp y ${amp.sepa ? 'on' : 'off'}"></div>
+          <div class="amp r ${amp.vol ? 'on' : 'off'}"></div>
+          <span style="font-size:9px;color:var(--dim);margin-left:3px">RS${s.rs} · ${s.vol.toFixed(1)}x · ${s.dist}%</span>
+        </div>
+      </div>
+      <div class="sr-right">
+        <div class="sr-price">${price}</div>
+        <div class="sr-chg ${chgCls}">${s.c >= 0 ? '+' : ''}${s.c.toFixed(1)}%</div>
+        <div style="margin-top:3px;text-align:right"><span class="setup-score score-${s.grade}">${s.grade}</span></div>
+      </div>
+    `;
+    row.onclick = () => showStock(s);
+    body.appendChild(row);
+  });
+
+  document.getElementById('wl-count').textContent = `${data.length} Aktien`;
+}
+
+function setWlFilter(f, el) {
+  STATE.wlFilter = f;
+  document.querySelectorAll('.fchip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderWatchlist();
+}
+
+// ══════════════════════════════════════
+// BRIEFING
+// ══════════════════════════════════════
+const BRIEFING_DATA = [
+  {
+    id: 'markt',
+    icon: '🔴',
+    title: 'MARKTLAGE HEUTE',
+    content: `
+      <p><strong>Gestern:</strong> S&P 500 -0,21% auf 6.781, Nasdaq knapp im Plus. Chip-Aktien nach starken TSMC-Daten stark: Nvidia +1,2%, Micron +3,5%, Intel +2,6%.</p>
+      <p><strong>Futures heute:</strong> S&P +0,20% · Dow +0,20% · Nasdaq +0,17%. VIX bei 24,80.</p>
+      <div class="highlight">⚠️ Europa schwach: DAX -1,2%, FTSE -0,7% nach Iran-Bedenken. IEA plant historisch große Ölreserven-Freigabe.</div>
+      <div class="tag-row">
+        <span class="tag neut">Risk-Off/On Mix</span>
+        <span class="tag bull">Chips stark</span>
+        <span class="tag bear">Europa schwach</span>
+      </div>
+    `
+  },
+  {
+    id: 'trump',
+    icon: '🇺🇸',
+    title: 'TRUMP-WATCH',
+    content: `
+      <p><strong>Letzte 24h:</strong> Widersprüchliche Signale — Gegenüber CBS: "very complete, pretty much." Dann: "not this week."</p>
+      <div class="highlight">⚡ Pentagon widerspricht Trump öffentlich. DoD postete "We have Only Just Begun to Fight" während Trump Krieg als nahezu beendet bezeichnete.</div>
+      <p><strong>TACO-Faktor:</strong> 🟡 HOCH. Typische Ambiguität als Verhandlungstaktik. Jede Deeskalationsmeldung = Öl-Short-Squeeze.</p>
+      <div class="tag-row">
+        <span class="tag bear">Iran-Konflikt</span>
+        <span class="tag watch">Ölpreis-Volatilität</span>
+        <span class="tag bull">Rüstung Long</span>
+      </div>
+    `
+  },
+  {
+    id: 'cpi',
+    icon: '📊',
+    title: 'CPI HEUTE 8:30 ET',
+    content: `
+      <p><strong>Konsens:</strong> Headline ~2,5% YoY, Core ~2,5%. Goldman Sachs erwartet kühleren Print bei 2,42%.</p>
+      <div class="highlight">🎯 Kühler Print = bullisch für alles außer USD. Heißer Print = Stagflations-Angst. Gold gewinnt in BEIDEN Szenarien.</div>
+      <div class="tag-row">
+        <span class="tag bull">Gold beide Wege</span>
+        <span class="tag watch">Fed-Reaktion</span>
+        <span class="tag bear">Heißer Print = Risk-Off</span>
+      </div>
+    `
+  },
+  {
+    id: 'oracle',
+    icon: '💻',
+    title: 'ORACLE EARNINGS',
+    content: `
+      <p><strong>Q3 Ergebnis:</strong> Umsatz +22% auf 17,2 Mrd. $, Cloud +44% auf 8,9 Mrd. $. EPS $1,79 vs. $1,70 erwartet.</p>
+      <div class="highlight">🚀 RPO +325% auf 553 Mrd. $. FY27-Guidance auf 90 Mrd. $ angehoben. ORCL vorbörslich +10%.</div>
+      <p>Positiver Übertrag auf AWS, Azure, Google Cloud. KI-Infrastruktur-Thesis bestätigt.</p>
+      <div class="tag-row">
+        <span class="tag bull">KI-Infra Long</span>
+        <span class="tag bull">Cloud bullisch</span>
+        <span class="tag watch">ORCL +10% vorbörslich</span>
+      </div>
+    `
+  },
+  {
+    id: 'energie',
+    icon: '⛽',
+    title: 'ENERGIE & ÖLDYNAMIK',
+    content: `
+      <p><strong>Gestern:</strong> WTI -11,94% auf 83,45 $ nach Trumps Deeskalationssignalen. Heute früh Brent wieder +2,2% auf ~89,72 $.</p>
+      <div class="highlight">Straße von Hormuz: Schiffstransit -95% in Woche 1. IEA-Release = 12 Tage Ausfall ausgeglichen — kein strukturelles Fix.</div>
+      <div class="tag-row">
+        <span class="tag bull">XOM, CVX, COP Long</span>
+        <span class="tag watch">IEA-Ankündigung heute</span>
+        <span class="tag bear">Airlines Short</span>
+      </div>
+    `
+  },
+  {
+    id: 'setups',
+    icon: '🎯',
+    title: 'TOP TRADING-SETUPS',
+    content: `
+      <p><strong>1. ORCL Long</strong> — RPO 553 Mrd. $, KI-Infrastruktur-Momentum. Catalyst: Heute Premarket-Gap.</p>
+      <p><strong>2. Gold Long (GLD)</strong> — Bullisch in beide CPI-Richtungen. Technisch stark über 5.200 $.</p>
+      <p><strong>3. Öl Short (taktisch)</strong> — IEA-Release + Trump-Rhetorik. Range: Ziel 80 $. Risiko: Hormuz-Eskalation.</p>
+      <div class="highlight">🏆 Best Setup heute: RTX / LMT Long — Rüstungszyklus unabhängig vom Kriegsende strukturell bullisch.</div>
+      <div class="tag-row">
+        <span class="tag bull">ORCL · GLD · RTX</span>
+        <span class="tag bear">Öl taktisch Short</span>
+      </div>
+    `
+  },
+];
+
+function renderBriefing() {
+  const container = document.getElementById('briefing-sections');
+  container.innerHTML = '';
+  BRIEFING_DATA.forEach(sec => {
+    const el = document.createElement('div');
+    el.className = 'briefing-section';
+    el.innerHTML = `
+      <div class="bs-header" id="bsh-${sec.id}" onclick="toggleSection('${sec.id}')">
+        <span class="bs-icon">${sec.icon}</span>
+        <span class="bs-title">${sec.title}</span>
+        <span class="bs-chevron">›</span>
+      </div>
+      <div class="bs-body" id="bsb-${sec.id}">${sec.content}</div>
+    `;
+    container.appendChild(el);
+  });
+
+  // Open first by default
+  toggleSection('markt');
+}
+
+function toggleSection(id) {
+  const header = document.getElementById('bsh-' + id);
+  const body   = document.getElementById('bsb-' + id);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  header.classList.toggle('open', !isOpen);
+}
+
+// ══════════════════════════════════════
+// ALERTS
+// ══════════════════════════════════════
+const ALERTS = [
+  { type:'trump', title:'🇺🇸 Trump-Watch Alert', text:'Trump: "War is pretty much complete" — dann Pentagon-Widerspruch. Öl volatile.', time:'Vor 2 Std.' },
+  { type:'bull',  title:'📈 ORCL +10% vorbörslich', text:'Q3 Earnings: Cloud +44%, RPO +325% auf 553 Mrd. $. KI-Infrastruktur bestätigt.', time:'Vor 4 Std.' },
+  { type:'bear',  title:'🔴 WTI -12% Crash', text:'Ölpreis kollabiert nach Trumps Deeskalationssignalen. IEA plant Notfall-Release.', time:'Vor 6 Std.' },
+  { type:'news',  title:'📊 CPI heute 8:30 ET', text:'Konsens: 2,5% Core. Goldman erwartet 2,42%. Marktbewegender Event — alle Assets betroffen.', time:'Vor 8 Std.' },
+  { type:'bull',  title:'⚡ TSMC Chip-Daten stark', text:'TSMC February Sales stark — Nvidia, AMD, AMAT ziehen vorbörslich an.', time:'Gestern' },
+  { type:'trump', title:'🇺🇸 Zoll-Androhung', text:'Trump droht zusätzliche 25% Zölle auf EU-Importe falls Verhandlungen scheitern.', time:'Gestern' },
+  { type:'bear',  title:'⚠️ Stagflations-Risiko', text:'Öl bei 90 $ + möglicher heißer CPI = Fed kann nicht schneiden. S&P Drawdown-Risiko.', time:'Gestern' },
+  { type:'bull',  title:'🏆 Rüstung strukturell bullisch', text:'RTX, LMT, NOC: Pentagon-Munitionsausgaben explodieren. 5 Mrd. $ in 2 Tagen.', time:'Vor 2 Tagen' },
+];
+
+function renderAlerts() {
+  const list = document.getElementById('alerts-list');
+  list.innerHTML = '';
+  ALERTS.forEach(a => {
+    const el = document.createElement('div');
+    el.className = 'alert-item';
+    el.innerHTML = `
+      <div class="alert-dot ${a.type}"></div>
+      <div class="alert-body">
+        <div class="alert-title">${a.title}</div>
+        <div class="alert-text">${a.text}</div>
+        <div class="alert-time">${a.time}</div>
+      </div>
+    `;
+    list.appendChild(el);
+  });
+}
+
+// ══════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════
+function renderSettings() {
+  const fkInput  = document.getElementById('finnhub-key');
+  const ckInput  = document.getElementById('claude-key');
+  if (fkInput) fkInput.value = STATE.apiKey;
+  if (ckInput) ckInput.value = STATE.claudeKey;
+}
+
+function saveKeys() {
+  const fk = document.getElementById('finnhub-key').value.trim();
+  const ck = document.getElementById('claude-key').value.trim();
+  STATE.apiKey   = fk;
+  STATE.claudeKey = ck;
+  localStorage.setItem('finnhub_key', fk);
+  localStorage.setItem('claude_key', ck);
+  showToast('✅ API Keys gespeichert!');
+  if (fk) fetchLivePrices();
+}
+
+function toggleNotif(el) {
+  el.classList.toggle('on');
+  STATE.notifications = el.classList.contains('on');
+  localStorage.setItem('notifs', STATE.notifications);
+  if (STATE.notifications) requestNotifPermission();
+}
+
+// ══════════════════════════════════════
+// LIVE PRICES (Finnhub)
+// ══════════════════════════════════════
+async function fetchLivePrices() {
+  if (!STATE.apiKey) return;
+  const tickers = STOCKS.map(s => s.t).slice(0, 30); // First batch
+  for (const ticker of tickers) {
+    try {
+      const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${STATE.apiKey}`);
+      const data = await res.json();
+      if (data.c) STATE.prices[ticker] = data.c;
+    } catch(e) {}
+    await new Promise(r => setTimeout(r, 150)); // rate limit
+  }
+  renderWatchlist();
+  renderDashboard();
+  showToast('📡 Live-Kurse aktualisiert');
+}
+
+// ══════════════════════════════════════
+// NOTIFICATIONS
+// ══════════════════════════════════════
+async function requestNotifPermission() {
+  if ('Notification' in window) {
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') showToast('🔔 Benachrichtigungen aktiviert!');
+  }
+}
+
+// ══════════════════════════════════════
+// STOCK DETAIL (modal)
+// ══════════════════════════════════════
+function showStock(s) {
+  const modal = document.getElementById('stock-modal');
+  const stageMap = {1:'s1',2:'s2',3:'s3',4:'s4'};
+  const stageLabel = {1:'Stage 1',2:'Stage 2',3:'Stage 3',4:'Stage 4'};
+  const chgCls = s.c > 0 ? 'pos' : s.c < 0 ? 'neg' : 'zero';
+  const amp = { rs: s.rs >= 80, sepa: s.stage === 2, vol: s.vol >= 1.5 };
+  const price = STATE.prices[s.t] || s.p;
+
+  document.getElementById('modal-content').innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+      <div style="width:56px;height:56px;border-radius:16px;background:${s.sec.color}18;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:${s.sec.color}">${s.sec.abbr}</div>
+      <div style="flex:1">
+        <div style="font-size:24px;font-weight:800;color:${s.sec.color};letter-spacing:0.5px">${s.t}</div>
+        <div style="font-size:13px;color:var(--mid);margin-top:2px">${s.n}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="setup-score score-${s.grade}" style="font-size:22px;width:44px;height:36px">${s.grade}</div>
+        <div style="font-size:10px;color:var(--mid);margin-top:4px">${s.score} / 100</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums">$${price.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+        <div style="font-size:11px;color:var(--mid);margin-top:2px">Kurs</div>
+      </div>
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:22px;font-weight:700" class="${chgCls}">${s.c >= 0 ? '+' : ''}${s.c.toFixed(1)}%</div>
+        <div style="font-size:11px;color:var(--mid);margin-top:2px">Heute</div>
+      </div>
+    </div>
+
+    <div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--mid);text-transform:uppercase;margin-bottom:14px">▸ MINERVINI KRITERIEN</div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-size:13px;font-weight:600">SEPA Stage</div>
+          <div style="font-size:11px;color:var(--mid);margin-top:1px">Trendstruktur der MA</div>
+        </div>
+        <span class="stage-tag ${stageMap[s.stage]}">${stageLabel[s.stage]}</span>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-size:13px;font-weight:600">RS Rating</div>
+          <div style="font-size:11px;color:var(--mid);margin-top:1px">Relative Stärke 0–100</div>
+        </div>
+        <span style="font-size:16px;font-weight:800;color:${rsColor(s.rs)}">${s.rs}</span>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-size:13px;font-weight:600">52W Abstand</div>
+          <div style="font-size:11px;color:var(--mid);margin-top:1px">Vom 52-Wochen-Hoch</div>
+        </div>
+        <span style="font-size:16px;font-weight:800;color:${Math.abs(s.dist) < 10 ? 'var(--green)' : Math.abs(s.dist) < 25 ? 'var(--yellow)' : 'var(--red)'}">${s.dist}%</span>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0">
+        <div>
+          <div style="font-size:13px;font-weight:600">Vol. Surge</div>
+          <div style="font-size:11px;color:var(--mid);margin-top:1px">Vielfaches Ø-Volumen</div>
+        </div>
+        <span style="font-size:16px;font-weight:800;color:${s.vol >= 1.5 ? 'var(--green)' : 'var(--mid)'}">${s.vol.toFixed(1)}x ${s.vol >= 2 ? '🔥' : ''}</span>
+      </div>
+    </div>
+
+    <div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--mid);text-transform:uppercase;margin-bottom:10px">▸ AMPEL</div>
+      <div style="display:flex;gap:16px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:14px;height:14px;border-radius:50%;background:var(--green);opacity:${amp.rs?1:0.15};box-shadow:${amp.rs?'0 0 8px var(--green)':'none'}"></div>
+          <span style="font-size:12px;color:${amp.rs?'var(--text)':'var(--dim)'}">RS ≥ 80</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:14px;height:14px;border-radius:50%;background:var(--yellow);opacity:${amp.sepa?1:0.15};box-shadow:${amp.sepa?'0 0 8px var(--yellow)':'none'}"></div>
+          <span style="font-size:12px;color:${amp.sepa?'var(--text)':'var(--dim)'}">Stage 2</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:14px;height:14px;border-radius:50%;background:var(--red);opacity:${amp.vol?1:0.15};box-shadow:${amp.vol?'0 0 8px var(--red)':'none'}"></div>
+          <span style="font-size:12px;color:${amp.vol?'var(--text)':'var(--dim)'}">Vol ≥1.5x</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--s2);border:1px solid var(--border);border-radius:12px">
+      <div style="font-size:18px">${s.sec.color === '#38d9f5' ? '💡' : '📍'}</div>
+      <div style="font-size:12px;color:var(--mid)"><strong style="color:var(--text)">${s.theme}</strong> — Sektor: ${s.sec.name}</div>
+    </div>
+  `;
+
+  modal.style.display = 'flex';
+  setTimeout(() => modal.classList.add('visible'), 10);
+}
+
+function closeModal() {
+  const modal = document.getElementById('stock-modal');
+  modal.classList.remove('visible');
+  setTimeout(() => modal.style.display = 'none', 250);
+}
+
+// ══════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.style.cssText = `
+    position:fixed;bottom:calc(var(--nav-h) + var(--safe-bot) + 16px);left:50%;transform:translateX(-50%) translateY(0);
+    background:rgba(20,30,40,0.95);color:var(--text);padding:10px 20px;border-radius:20px;
+    font-size:13px;font-weight:600;border:1px solid var(--border);z-index:999;
+    backdrop-filter:blur(10px);transition:opacity 0.3s;
+  `;
+  t.style.opacity = '1';
+  setTimeout(() => { t.style.opacity = '0'; }, 2500);
+}
+
+// ══════════════════════════════════════
+// PWA INSTALL
+// ══════════════════════════════════════
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').style.display = 'flex';
+});
+
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      document.getElementById('install-banner').style.display = 'none';
+    });
+  }
+}
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+
+  // Render all screens
+  renderDashboard();
+  renderWatchlist();
+  renderBriefing();
+  renderAlerts();
+  renderSettings();
+
+  // Hide install banner on iOS (handled via Safari prompt)
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (isIOS && !window.navigator.standalone) {
+    const banner = document.getElementById('install-banner');
+    if (banner) {
+      banner.querySelector('.install-title').textContent = 'Als App installieren';
+      banner.querySelector('.install-sub').textContent = 'Tippe auf Teilen → "Zum Homescreen"';
+      banner.style.display = 'flex';
+    }
+  }
+
+  // Load live prices if key exists
+  if (STATE.apiKey) fetchLivePrices();
+});
+</script>
+</body>
+</html>
