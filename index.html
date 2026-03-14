@@ -1069,7 +1069,7 @@ html, body {
           <div class="setting-icon">📱</div>
           <div class="setting-text">
             <div class="setting-name">Minervini Trader PWA</div>
-            <div class="setting-desc">Version 1.0 · Schritt 1 von 4</div>
+            <div class="setting-desc">Version 2.0 · 220 Aktien · KI · Geteilte WL</div>
           </div>
         </div>
         <div class="setting-item">
@@ -1134,8 +1134,8 @@ html, body {
       <div class="topbar-sub"><span id="mywl-count">0</span> Aktien · Live-Signalcheck</div>
     </div>
     <div class="topbar-right">
-      <div class="live-badge" onclick="getMyWatchlist().forEach(e=>fetchSinglePrice(e.ticker));showToast('📡 Kurse werden geladen...')" style="cursor:pointer">
-        <div class="live-dot"></div>SYNC
+      <div class="live-badge" onclick="renderMyWatchlist();getMyWatchlist().then(l=>l.forEach(e=>fetchSinglePrice(e.ticker)));showToast('☁️ Sync...')" style="cursor:pointer;background:rgba(56,217,245,0.08);border-color:rgba(56,217,245,0.2);color:var(--cyan)">
+        <div class="live-dot" style="background:var(--cyan)"></div>SYNC
       </div>
     </div>
   </div>
@@ -1154,6 +1154,16 @@ html, body {
     </div>
     <!-- Suggestions -->
     <div id="ticker-suggestions" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:5px"></div>
+  </div>
+
+  <!-- Shared info banner -->
+  <div style="margin:0 16px 10px;padding:10px 14px;background:rgba(56,217,245,0.06);border:1px solid rgba(56,217,245,0.2);border-radius:12px;display:flex;align-items:center;gap:10px">
+    <span style="font-size:18px">☁️</span>
+    <div>
+      <div style="font-size:12px;font-weight:700;color:var(--cyan)">Geteilte Watchlist</div>
+      <div style="font-size:11px;color:var(--mid);margin-top:1px">Beide Nutzer sehen & bearbeiten dieselbe Liste</div>
+    </div>
+    <div onclick="renderMyWatchlist()" style="margin-left:auto;font-size:11px;font-weight:700;color:var(--cyan);cursor:pointer">↻ Refresh</div>
   </div>
 
   <!-- Signal Legend -->
@@ -1508,29 +1518,42 @@ function rsColor(rs) {
 // ═══════════════════════════════════════════
 // PERSOENLICHE WATCHLIST
 // ═══════════════════════════════════════════
-const MY_WL_KEY = 'my_watchlist_v2';
+const MY_WL_KEY = 'shared_watchlist_v1';
 
-function getMyWatchlist() {
-  try { return JSON.parse(localStorage.getItem(MY_WL_KEY) || '[]'); } catch(e) { return []; }
+async function getMyWatchlist() {
+  try {
+    const result = await window.storage.get(MY_WL_KEY, true); // shared=true
+    return result ? JSON.parse(result.value) : [];
+  } catch(e) { return []; }
 }
-function saveMyWatchlist(list) { localStorage.setItem(MY_WL_KEY, JSON.stringify(list)); }
 
-function addToMyWatchlist(ticker) {
+async function saveMyWatchlist(list) {
+  try {
+    await window.storage.set(MY_WL_KEY, JSON.stringify(list), true); // shared=true
+  } catch(e) {
+    // Fallback to localStorage if storage API unavailable
+    localStorage.setItem(MY_WL_KEY, JSON.stringify(list));
+  }
+}
+
+async function addToMyWatchlist(ticker) {
   ticker = ticker.trim().toUpperCase().replace(/[^A-Z.]/g,'');
   if (!ticker) return;
-  const list = getMyWatchlist();
+  const list = await getMyWatchlist();
   if (list.find(x => x.ticker === ticker)) { showToast('\u26a0\ufe0f ' + ticker + ' bereits in Watchlist'); return; }
   const known = STOCKS.find(s => s.t === ticker);
   list.push({ ticker, name: known?.n || ticker, sid: known?.sid || 'CUST', addedAt: Date.now(), custom: !known });
-  saveMyWatchlist(list);
+  await saveMyWatchlist(list);
   showToast('\u2705 ' + ticker + ' hinzugef\u00fcgt!');
   renderMyWatchlist();
   if (STATE.apiKey) fetchSinglePrice(ticker);
   document.getElementById('my-wl-input').value = '';
+  showTickerSuggestions('');
 }
 
-function removeFromMyWatchlist(ticker) {
-  saveMyWatchlist(getMyWatchlist().filter(x => x.ticker !== ticker));
+async function removeFromMyWatchlist(ticker) {
+  const list = await getMyWatchlist();
+  await saveMyWatchlist(list.filter(x => x.ticker !== ticker));
   showToast('\uD83D\uDDD1 ' + ticker + ' entfernt');
   renderMyWatchlist();
 }
@@ -1572,16 +1595,21 @@ function checkSignals(ticker) {
   return sigs;
 }
 
-function renderMyWatchlist() {
+async function renderMyWatchlist() {
   const container = document.getElementById('my-wl-body');
   if (!container) return;
-  const list = getMyWatchlist();
+
+  // Show loading
+  container.innerHTML = '<div class="ai-loading"><div class="ai-spinner"></div>Lade geteilte Watchlist...</div>';
+
+  const list = await getMyWatchlist();
+
   // Update count badge
   const badge = document.getElementById('mywl-count');
   if (badge) badge.textContent = list.length;
 
   if (list.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-icon">\uD83D\uDC41</div><div class="empty-text">Noch keine Aktien.<br>Ticker oben eingeben und hinzuf\u00fcgen.</div></div>';
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">\uD83D\uDC41</div><div class="empty-text">Noch keine Aktien.<br>Ticker oben eingeben und hinzuf\u00fcgen.<br><br><span style="font-size:11px;color:var(--cyan)">☁️ Geteilte Watchlist — beide Nutzer sehen dieselben Aktien</span></div></div>';
     return;
   }
   container.innerHTML = '';
@@ -2917,6 +2945,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Trump check every hour
     setInterval(checkTrumpAlert, 3600000);
   }
+
+  // ── Auto-sync shared watchlist every 30s ──
+  setInterval(() => {
+    if (STATE.screen === 'mywl') renderMyWatchlist();
+  }, 30000);
 
   // ── Update date in briefing ──
   const today = new Date().toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
