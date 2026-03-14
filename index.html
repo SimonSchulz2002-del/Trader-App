@@ -1005,12 +1005,23 @@ html, body {
     <!-- Notifications -->
     <div class="settings-section">
       <div class="settings-label">🔔 Benachrichtigungen</div>
+
+      <!-- Status Banner -->
+      <div id="notif-status-banner" style="margin-bottom:10px;padding:12px 14px;background:var(--s1);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;gap:10px">
+        <div id="notif-status-dot" style="width:10px;height:10px;border-radius:50%;background:var(--dim);flex-shrink:0"></div>
+        <div style="flex:1">
+          <div id="notif-status-text" style="font-size:13px;font-weight:600">Status wird geprüft...</div>
+          <div id="notif-status-sub" style="font-size:11px;color:var(--mid);margin-top:1px">iOS 16.4+ erforderlich</div>
+        </div>
+        <div onclick="requestNotifPermission()" style="font-size:12px;font-weight:700;color:var(--gold);cursor:pointer">AKTIVIEREN</div>
+      </div>
+
       <div class="setting-row">
         <div class="setting-item">
-          <div class="setting-icon">📈</div>
+          <div class="setting-icon">🇺🇸</div>
           <div class="setting-text">
             <div class="setting-name">Trump-Watch Alerts</div>
-            <div class="setting-desc">Bei marktrelevanten Trump-Aussagen</div>
+            <div class="setting-desc">Bei marktrelevanten Trump-Aktionen · Stündlich</div>
           </div>
           <div class="toggle on" onclick="toggleNotif(this)"></div>
         </div>
@@ -1018,7 +1029,7 @@ html, body {
           <div class="setting-icon">🎯</div>
           <div class="setting-text">
             <div class="setting-name">Setup-Alerts</div>
-            <div class="setting-desc">Neue Score-A Setups</div>
+            <div class="setting-desc">Score-A + Vol-Surge ≥ 2x · Alle 5 Min.</div>
           </div>
           <div class="toggle on" onclick="toggleNotif(this)"></div>
         </div>
@@ -1026,7 +1037,7 @@ html, body {
           <div class="setting-icon">📊</div>
           <div class="setting-text">
             <div class="setting-name">Tages-Briefing</div>
-            <div class="setting-desc">Täglich 8:00 Uhr</div>
+            <div class="setting-desc">Täglich 8:00 Uhr + Börsenschluss 22:05</div>
           </div>
           <div class="toggle on" onclick="toggleNotif(this)"></div>
         </div>
@@ -1034,10 +1045,15 @@ html, body {
           <div class="setting-icon">⚠️</div>
           <div class="setting-text">
             <div class="setting-name">Earnings-Alerts</div>
-            <div class="setting-desc">Vor wichtigen Earnings</div>
+            <div class="setting-desc">Vor wichtigen Earnings deiner Watchlist</div>
           </div>
           <div class="toggle" onclick="toggleNotif(this)"></div>
         </div>
+      </div>
+
+      <!-- Test Button -->
+      <div onclick="testNotification()" style="margin-top:10px;padding:13px;background:var(--s1);border:1px solid var(--border);border-radius:12px;text-align:center;cursor:pointer;font-size:13px;font-weight:700;color:var(--cyan)">
+        📱 Test-Notification senden
       </div>
     </div>
 
@@ -1083,8 +1099,13 @@ html, body {
     <div class="nav-indicator"></div>
   </div>
   <div class="nav-item" id="nav-watchlist" onclick="navigate('watchlist')">
-    <div class="nav-icon">👁</div>
-    <div class="nav-label">Watchlist</div>
+    <div class="nav-icon">📋</div>
+    <div class="nav-label">Screening</div>
+    <div class="nav-indicator"></div>
+  </div>
+  <div class="nav-item" id="nav-mywl" onclick="navigate('mywl');renderMyWatchlist()">
+    <div class="nav-icon">⭐</div>
+    <div class="nav-label">Meine WL</div>
     <div class="nav-indicator"></div>
   </div>
   <div class="nav-item" id="nav-briefing" onclick="navigate('briefing')">
@@ -1103,6 +1124,50 @@ html, body {
     <div class="nav-indicator"></div>
   </div>
 </nav>
+
+<!-- ══════════════════════════════════ -->
+<!-- SCREEN: MEINE WATCHLIST           -->
+<!-- ══════════════════════════════════ -->
+<div class="screen" id="screen-mywl">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Meine Watchlist</div>
+      <div class="topbar-sub"><span id="mywl-count">0</span> Aktien · Live-Signalcheck</div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-badge" onclick="getMyWatchlist().forEach(e=>fetchSinglePrice(e.ticker));showToast('📡 Kurse werden geladen...')" style="cursor:pointer">
+        <div class="live-dot"></div>SYNC
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Ticker Input -->
+  <div style="margin:6px 16px 10px;background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:12px 14px">
+    <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--mid);text-transform:uppercase;margin-bottom:8px">▸ TICKER HINZUFÜGEN</div>
+    <div style="display:flex;gap:8px">
+      <input id="my-wl-input" type="text" placeholder="z.B. NVDA, AAPL, MSFT..."
+        style="flex:1;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);outline:none;-webkit-appearance:none;text-transform:uppercase"
+        onkeydown="if(event.key==='Enter')addToMyWatchlist(this.value)"
+        oninput="this.value=this.value.toUpperCase();showTickerSuggestions(this.value)"
+        autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+      <div onclick="addToMyWatchlist(document.getElementById('my-wl-input').value)"
+        style="background:var(--gold);color:var(--bg);font-weight:800;font-size:20px;width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">+</div>
+    </div>
+    <!-- Suggestions -->
+    <div id="ticker-suggestions" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:5px"></div>
+  </div>
+
+  <!-- Signal Legend -->
+  <div style="margin:0 16px 10px;display:flex;gap:12px;align-items:center;padding:8px 12px;background:var(--s1);border:1px solid var(--border);border-radius:10px">
+    <div style="font-size:9px;font-weight:700;letter-spacing:1px;color:var(--dim);text-transform:uppercase">Signale:</div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--green)"><div style="width:7px;height:7px;border-radius:50%;background:var(--green)"></div>Bullisch</div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--red)"><div style="width:7px;height:7px;border-radius:50%;background:var(--red)"></div>Bärisch</div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--cyan)"><div style="width:7px;height:7px;border-radius:50%;background:var(--cyan)"></div>Watch</div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--yellow)"><div style="width:7px;height:7px;border-radius:50%;background:var(--yellow)"></div>Neutral</div>
+  </div>
+
+  <div class="scroll-body" id="my-wl-body"></div>
+</div>
 
 <!-- ══════════════════════════════════ -->
 <!-- STOCK DETAIL MODAL               -->
@@ -1277,6 +1342,128 @@ const RAW_STOCKS = [
   { sid:'COM', t:'SPOT',  n:'Spotify',              theme:'Audio-Streaming',p:548.40,  c:1.1,  stage:2, rs:90, dist:-4,  vol:1.7 },
   { sid:'COM', t:'SNAP',  n:'Snap',                 theme:'Social Media',   p:12.30,   c:-1.4, stage:4, rs:28, dist:-48, vol:1.5 },
   { sid:'COM', t:'PARA',  n:'Paramount Global',     theme:'Streaming/TV',   p:14.70,   c:0.3,  stage:3, rs:44, dist:-30, vol:0.9 },
+  // ── IT extra ──
+  { sid:'IT',  t:'CRWD',  n:'CrowdStrike',          theme:'Cybersecurity',  p:348.70,  c:1.4,  stage:2, rs:91, dist:-4,  vol:1.8 },
+  { sid:'IT',  t:'PANW',  n:'Palo Alto Networks',   theme:'Cybersecurity',  p:178.60,  c:1.1,  stage:2, rs:85, dist:-6,  vol:1.5 },
+  { sid:'IT',  t:'FTNT',  n:'Fortinet',             theme:'Cybersecurity',  p:98.40,   c:0.8,  stage:2, rs:79, dist:-10, vol:1.3 },
+  { sid:'IT',  t:'SNPS',  n:'Synopsys',             theme:'EDA Software',   p:498.30,  c:0.6,  stage:2, rs:82, dist:-7,  vol:1.2 },
+  { sid:'IT',  t:'CDNS',  n:'Cadence Design',       theme:'EDA Software',   p:278.40,  c:0.5,  stage:2, rs:81, dist:-9,  vol:1.1 },
+  { sid:'IT',  t:'TTD',   n:'The Trade Desk',       theme:'AdTech/KI',      p:78.40,   c:1.2,  stage:2, rs:83, dist:-8,  vol:1.6 },
+  { sid:'IT',  t:'FICO',  n:'Fair Isaac (FICO)',    theme:'Analytics',      p:1948.60, c:0.7,  stage:2, rs:88, dist:-5,  vol:1.3 },
+  { sid:'IT',  t:'WDAY',  n:'Workday',              theme:'HR Software',    p:238.30,  c:-0.3, stage:1, rs:64, dist:-16, vol:0.8 },
+  { sid:'IT',  t:'ADSK',  n:'Autodesk',             theme:'Design SW',      p:268.90,  c:0.2,  stage:1, rs:68, dist:-14, vol:0.9 },
+  { sid:'IT',  t:'MSCI',  n:'MSCI Inc.',            theme:'Financial Data', p:548.20,  c:0.3,  stage:2, rs:80, dist:-8,  vol:1.1 },
+  // ── HC extra ──
+  { sid:'HC',  t:'VRTX',  n:'Vertex Pharmaceuticals',theme:'Biotech/CF',   p:448.60,  c:0.9,  stage:2, rs:86, dist:-6,  vol:1.4 },
+  { sid:'HC',  t:'GILD',  n:'Gilead Sciences',      theme:'Antiviralia',    p:98.30,   c:0.3,  stage:1, rs:66, dist:-12, vol:0.9 },
+  { sid:'HC',  t:'HCA',   n:'HCA Healthcare',       theme:'Krankenhaeuser', p:318.50,  c:0.4,  stage:2, rs:77, dist:-10, vol:1.1 },
+  { sid:'HC',  t:'CI',    n:'Cigna Group',          theme:'Krankenvers.',   p:298.40,  c:0.2,  stage:1, rs:63, dist:-14, vol:0.8 },
+  { sid:'HC',  t:'ELV',   n:'Elevance Health',      theme:'Krankenvers.',   p:418.30,  c:-0.1, stage:1, rs:60, dist:-18, vol:0.7 },
+  { sid:'HC',  t:'CVS',   n:'CVS Health',           theme:'Apotheke',       p:58.70,   c:0.1,  stage:1, rs:52, dist:-22, vol:0.6 },
+  { sid:'HC',  t:'BDX',   n:'Becton Dickinson',     theme:'MedTech',        p:198.40,  c:0.2,  stage:1, rs:58, dist:-18, vol:0.7 },
+  { sid:'HC',  t:'BIIB',  n:'Biogen',               theme:'Neurologie',     p:138.70,  c:-0.2, stage:1, rs:54, dist:-28, vol:0.7 },
+  { sid:'HC',  t:'ZBH',   n:'Zimmer Biomet',        theme:'Orthopaedie',    p:98.40,   c:0.3,  stage:1, rs:61, dist:-16, vol:0.7 },
+  { sid:'HC',  t:'BAX',   n:'Baxter International', theme:'MedTech',        p:28.30,   c:-0.4, stage:4, rs:32, dist:-48, vol:0.9 },
+  // ── FIN extra ──
+  { sid:'FIN', t:'AXP',   n:'American Express',     theme:'Kreditkarten',   p:278.40,  c:0.5,  stage:2, rs:84, dist:-6,  vol:1.2 },
+  { sid:'FIN', t:'COF',   n:'Capital One',          theme:'Kreditkarten',   p:178.60,  c:0.6,  stage:2, rs:78, dist:-9,  vol:1.2 },
+  { sid:'FIN', t:'ICE',   n:'Intercont. Exchange',  theme:'Boerse/Daten',   p:168.40,  c:0.4,  stage:2, rs:80, dist:-8,  vol:1.1 },
+  { sid:'FIN', t:'CME',   n:'CME Group',            theme:'Derivate-Boerse',p:228.30,  c:0.3,  stage:2, rs:78, dist:-9,  vol:1.0 },
+  { sid:'FIN', t:'C',     n:'Citigroup',            theme:'Grossbank',      p:68.30,   c:0.3,  stage:1, rs:65, dist:-14, vol:0.9 },
+  { sid:'FIN', t:'PNC',   n:'PNC Financial',        theme:'Regionalbank',   p:178.40,  c:0.2,  stage:1, rs:62, dist:-13, vol:0.8 },
+  { sid:'FIN', t:'TRV',   n:'Travelers Companies',  theme:'Versicherung',   p:248.70,  c:0.2,  stage:1, rs:68, dist:-11, vol:0.8 },
+  { sid:'FIN', t:'ALL',   n:'Allstate',             theme:'Versicherung',   p:198.40,  c:0.3,  stage:2, rs:74, dist:-10, vol:0.9 },
+  { sid:'FIN', t:'USB',   n:'U.S. Bancorp',         theme:'Regionalbank',   p:44.70,   c:0.1,  stage:1, rs:58, dist:-16, vol:0.7 },
+  { sid:'FIN', t:'MET',   n:'MetLife',              theme:'Lebensversich.', p:78.30,   c:0.2,  stage:1, rs:63, dist:-13, vol:0.8 },
+  // ── CD extra ──
+  { sid:'CD',  t:'ORLY',  n:"O'Reilly Automotive",  theme:'Auto-Teile',     p:1148.60, c:0.4,  stage:2, rs:82, dist:-6,  vol:1.2 },
+  { sid:'CD',  t:'AZO',   n:'AutoZone',             theme:'Auto-Teile',     p:3248.40, c:0.3,  stage:2, rs:80, dist:-8,  vol:1.1 },
+  { sid:'CD',  t:'CMG',   n:'Chipotle',             theme:'Fast Casual',    p:48.70,   c:0.4,  stage:2, rs:76, dist:-11, vol:1.2 },
+  { sid:'CD',  t:'ROST',  n:'Ross Stores',          theme:'Discount Retail',p:148.40,  c:0.3,  stage:2, rs:79, dist:-7,  vol:1.1 },
+  { sid:'CD',  t:'MAR',   n:'Marriott',             theme:'Hotels',         p:248.60,  c:0.5,  stage:2, rs:77, dist:-9,  vol:1.1 },
+  { sid:'CD',  t:'HLT',   n:'Hilton Worldwide',     theme:'Hotels',         p:218.40,  c:0.4,  stage:2, rs:76, dist:-10, vol:1.0 },
+  { sid:'CD',  t:'DHI',   n:'D.R. Horton',          theme:'Hausbau',        p:128.30,  c:-0.3, stage:1, rs:58, dist:-22, vol:0.8 },
+  { sid:'CD',  t:'LULU',  n:'Lululemon',            theme:'Sportmode',      p:298.40,  c:0.5,  stage:1, rs:62, dist:-32, vol:0.9 },
+  { sid:'CD',  t:'YUM',   n:'Yum! Brands',          theme:'Franchises',     p:138.30,  c:0.1,  stage:1, rs:60, dist:-13, vol:0.7 },
+  { sid:'CD',  t:'LEN',   n:'Lennar Corp',          theme:'Hausbau',        p:138.40,  c:-0.2, stage:1, rs:60, dist:-20, vol:0.8 },
+  // ── CS extra ──
+  { sid:'CS',  t:'EL',    n:'Estee Lauder',         theme:'Kosmetik',       p:68.30,   c:-0.6, stage:4, rs:28, dist:-58, vol:0.9 },
+  { sid:'CS',  t:'STZ',   n:'Constellation Brands', theme:'Alkohol',        p:168.30,  c:0.3,  stage:1, rs:58, dist:-22, vol:0.8 },
+  { sid:'CS',  t:'GIS',   n:'General Mills',        theme:'Lebensmittel',   p:58.40,   c:-0.1, stage:1, rs:50, dist:-15, vol:0.6 },
+  { sid:'CS',  t:'SYY',   n:'Sysco',                theme:'Foodservice',    p:78.40,   c:0.2,  stage:1, rs:60, dist:-11, vol:0.7 },
+  { sid:'CS',  t:'TSN',   n:'Tyson Foods',          theme:'Fleischprod.',   p:58.40,   c:0.1,  stage:1, rs:54, dist:-16, vol:0.7 },
+  { sid:'CS',  t:'HSY',   n:'Hershey',              theme:'Suesswaren',     p:148.60,  c:0.1,  stage:1, rs:52, dist:-18, vol:0.6 },
+  { sid:'CS',  t:'CLX',   n:'Clorox',               theme:'Haushalt',       p:148.30,  c:0.2,  stage:1, rs:55, dist:-12, vol:0.6 },
+  { sid:'CS',  t:'CHD',   n:'Church & Dwight',      theme:'Haushalt',       p:98.40,   c:0.1,  stage:1, rs:58, dist:-10, vol:0.6 },
+  { sid:'CS',  t:'ADM',   n:'Archer-Daniels-Midland',theme:'Agrarprod.',    p:48.30,   c:-0.3, stage:4, rs:36, dist:-38, vol:0.8 },
+  { sid:'CS',  t:'K',     n:'Kellanova',            theme:'Cerealien',      p:78.30,   c:0.2,  stage:1, rs:62, dist:-8,  vol:0.7 },
+  // ── IND extra ──
+  { sid:'IND', t:'ETN',   n:'Eaton Corp',           theme:'Energiemanag.',  p:298.60,  c:0.7,  stage:2, rs:84, dist:-7,  vol:1.3 },
+  { sid:'IND', t:'GD',    n:'General Dynamics',     theme:'Ruestung',       p:298.30,  c:0.8,  stage:2, rs:83, dist:-7,  vol:1.3 },
+  { sid:'IND', t:'LHX',   n:'L3Harris Technologies',theme:'Ruestung/Elektr',p:248.40,  c:0.9,  stage:2, rs:82, dist:-8,  vol:1.4 },
+  { sid:'IND', t:'PH',    n:'Parker Hannifin',      theme:'Industriekomp.', p:648.40,  c:0.4,  stage:2, rs:79, dist:-9,  vol:1.1 },
+  { sid:'IND', t:'ITW',   n:'Illinois Tool Works',  theme:'Industrie',      p:248.30,  c:0.2,  stage:1, rs:66, dist:-12, vol:0.8 },
+  { sid:'IND', t:'EMR',   n:'Emerson Electric',     theme:'Industrie-Auto', p:98.40,   c:0.2,  stage:1, rs:65, dist:-13, vol:0.8 },
+  { sid:'IND', t:'LDOS',  n:'Leidos Holdings',      theme:'Ruestung/IT',    p:148.60,  c:0.6,  stage:2, rs:80, dist:-9,  vol:1.2 },
+  { sid:'IND', t:'CARR',  n:'Carrier Global',       theme:'Klimatechnik',   p:68.30,   c:0.3,  stage:1, rs:68, dist:-12, vol:0.9 },
+  { sid:'IND', t:'WAB',   n:'Wabtec Corp',          theme:'Bahn-Technik',   p:178.30,  c:0.5,  stage:2, rs:78, dist:-10, vol:1.1 },
+  { sid:'IND', t:'OTIS',  n:'Otis Worldwide',       theme:'Aufzuege',       p:98.40,   c:0.2,  stage:1, rs:64, dist:-11, vol:0.7 },
+  // ── EN extra ──
+  { sid:'EN',  t:'TPL',   n:'Texas Pacific Land',   theme:'Land/Royalties', p:1248.60, c:3.1,  stage:2, rs:92, dist:-3,  vol:2.3 },
+  { sid:'EN',  t:'FANG',  n:'Diamondback Energy',   theme:'Shale-E&P',      p:168.40,  c:2.6,  stage:2, rs:87, dist:-7,  vol:2.0 },
+  { sid:'EN',  t:'HES',   n:'Hess Corp',            theme:'E&P/Guyana',     p:148.60,  c:2.4,  stage:2, rs:84, dist:-8,  vol:1.9 },
+  { sid:'EN',  t:'MRO',   n:'Marathon Oil',         theme:'E&P',            p:28.30,   c:2.1,  stage:2, rs:82, dist:-10, vol:1.8 },
+  { sid:'EN',  t:'BKR',   n:'Baker Hughes',         theme:'Oel-Services',   p:38.40,   c:1.6,  stage:2, rs:78, dist:-11, vol:1.5 },
+  { sid:'EN',  t:'VLO',   n:'Valero Energy',        theme:'Raffinerie',     p:148.30,  c:1.3,  stage:1, rs:74, dist:-12, vol:1.3 },
+  { sid:'EN',  t:'KMI',   n:'Kinder Morgan',        theme:'Pipeline',       p:28.40,   c:0.8,  stage:2, rs:76, dist:-8,  vol:1.1 },
+  { sid:'EN',  t:'WMB',   n:'Williams Companies',   theme:'Pipeline/Gas',   p:48.30,   c:0.9,  stage:2, rs:78, dist:-7,  vol:1.2 },
+  { sid:'EN',  t:'OKE',   n:'ONEOK',                theme:'Pipeline/Gas',   p:98.40,   c:0.7,  stage:2, rs:76, dist:-9,  vol:1.1 },
+  { sid:'EN',  t:'APA',   n:'APA Corp',             theme:'E&P Intl.',      p:18.40,   c:1.8,  stage:2, rs:76, dist:-14, vol:1.6 },
+  // ── UT extra ──
+  { sid:'UT',  t:'AWK',   n:'American Water Works', theme:'Wasser',         p:128.40,  c:0.3,  stage:1, rs:62, dist:-12, vol:0.7 },
+  { sid:'UT',  t:'WEC',   n:'WEC Energy Group',     theme:'Strom/Gas',      p:98.30,   c:0.2,  stage:1, rs:58, dist:-10, vol:0.6 },
+  { sid:'UT',  t:'ETR',   n:'Entergy Corp',         theme:'Nuklear/Strom',  p:138.40,  c:0.3,  stage:1, rs:60, dist:-9,  vol:0.7 },
+  { sid:'UT',  t:'AEE',   n:'Ameren Corp',          theme:'Strom/Gas',      p:88.30,   c:0.2,  stage:1, rs:57, dist:-10, vol:0.6 },
+  { sid:'UT',  t:'CMS',   n:'CMS Energy',           theme:'Strom/Gas',      p:68.40,   c:0.1,  stage:1, rs:55, dist:-9,  vol:0.6 },
+  { sid:'UT',  t:'PPL',   n:'PPL Corp',             theme:'Strom',          p:34.40,   c:0.1,  stage:1, rs:52, dist:-11, vol:0.6 },
+  { sid:'UT',  t:'FE',    n:'FirstEnergy',          theme:'Strom',          p:44.30,   c:0.2,  stage:1, rs:56, dist:-12, vol:0.6 },
+  { sid:'UT',  t:'CNP',   n:'CenterPoint Energy',   theme:'Gas/Strom',      p:28.40,   c:0.1,  stage:1, rs:58, dist:-10, vol:0.6 },
+  { sid:'UT',  t:'NI',    n:'NiSource',             theme:'Gas/Strom',      p:34.30,   c:0.1,  stage:1, rs:54, dist:-10, vol:0.5 },
+  { sid:'UT',  t:'LNT',   n:'Alliant Energy',       theme:'Strom/Wind',     p:58.30,   c:0.2,  stage:1, rs:59, dist:-9,  vol:0.6 },
+  // ── RE extra ──
+  { sid:'RE',  t:'IRM',   n:'Iron Mountain',        theme:'Datenspeicher',  p:98.60,   c:0.5,  stage:2, rs:76, dist:-10, vol:1.1 },
+  { sid:'RE',  t:'EQR',   n:'Equity Residential',   theme:'Wohnimmob.',     p:68.40,   c:0.2,  stage:1, rs:60, dist:-14, vol:0.7 },
+  { sid:'RE',  t:'AVB',   n:'AvalonBay Communities', theme:'Wohnimmob.',    p:198.30,  c:0.3,  stage:1, rs:63, dist:-13, vol:0.7 },
+  { sid:'RE',  t:'EXR',   n:'Extra Space Storage',  theme:'Self-Storage',   p:148.30,  c:0.3,  stage:1, rs:62, dist:-13, vol:0.7 },
+  { sid:'RE',  t:'MAA',   n:'Mid-America Apartment', theme:'Wohnimmob.',    p:158.40,  c:0.2,  stage:1, rs:61, dist:-12, vol:0.7 },
+  { sid:'RE',  t:'ARE',   n:'Alexandria Real Estate',theme:'Biotech-REITs', p:98.40,   c:0.2,  stage:1, rs:58, dist:-20, vol:0.6 },
+  { sid:'RE',  t:'KIM',   n:'Kimco Realty',         theme:'Shopping Ctr.',  p:22.40,   c:0.2,  stage:1, rs:58, dist:-12, vol:0.7 },
+  { sid:'RE',  t:'NNN',   n:'NNN REIT',             theme:'Net Lease',      p:44.30,   c:0.1,  stage:1, rs:55, dist:-11, vol:0.6 },
+  { sid:'RE',  t:'WPC',   n:'W. P. Carey',          theme:'Net Lease',      p:58.30,   c:0.1,  stage:1, rs:54, dist:-16, vol:0.6 },
+  { sid:'RE',  t:'CUZ',   n:'Cousins Properties',   theme:'Bueroimmob.',    p:28.40,   c:0.2,  stage:1, rs:57, dist:-14, vol:0.7 },
+  // ── MAT extra ──
+  { sid:'MAT', t:'VMC',   n:'Vulcan Materials',     theme:'Baustoffe',      p:248.30,  c:0.3,  stage:2, rs:75, dist:-11, vol:1.0 },
+  { sid:'MAT', t:'MLM',   n:'Martin Marietta',      theme:'Baustoffe',      p:548.40,  c:0.4,  stage:2, rs:76, dist:-10, vol:1.0 },
+  { sid:'MAT', t:'CF',    n:'CF Industries',        theme:'Stickstoffdung.',p:78.40,   c:0.5,  stage:2, rs:72, dist:-12, vol:1.1 },
+  { sid:'MAT', t:'AA',    n:'Alcoa',                theme:'Aluminium',      p:28.30,   c:1.2,  stage:2, rs:72, dist:-14, vol:1.4 },
+  { sid:'MAT', t:'NTR',   n:'Nutrien',              theme:'Duengemittel',   p:48.30,   c:0.4,  stage:1, rs:58, dist:-18, vol:0.8 },
+  { sid:'MAT', t:'X',     n:'U.S. Steel',           theme:'Stahl',          p:38.40,   c:0.8,  stage:1, rs:62, dist:-22, vol:1.1 },
+  { sid:'MAT', t:'IP',    n:'International Paper',  theme:'Papier/Verp.',   p:48.30,   c:0.2,  stage:1, rs:58, dist:-16, vol:0.7 },
+  { sid:'MAT', t:'IFF',   n:'Intl. Flavors',        theme:'Chemie/Aromen',  p:78.30,   c:0.1,  stage:1, rs:55, dist:-20, vol:0.7 },
+  { sid:'MAT', t:'CE',    n:'Celanese Corp',        theme:'Spezialchemie',  p:48.40,   c:0.3,  stage:1, rs:52, dist:-42, vol:0.8 },
+  { sid:'MAT', t:'WRK',   n:'WestRock',             theme:'Verpackung',     p:38.40,   c:0.1,  stage:1, rs:54, dist:-18, vol:0.6 },
+  // ── COM extra ──
+  { sid:'COM', t:'TTWO',  n:'Take-Two Interactive', theme:'Gaming',         p:168.40,  c:0.8,  stage:2, rs:78, dist:-11, vol:1.4 },
+  { sid:'COM', t:'EA',    n:'Electronic Arts',      theme:'Gaming',         p:138.20,  c:0.2,  stage:1, rs:61, dist:-14, vol:0.8 },
+  { sid:'COM', t:'PINS',  n:'Pinterest',            theme:'Social Media',   p:32.40,   c:0.9,  stage:2, rs:72, dist:-16, vol:1.3 },
+  { sid:'COM', t:'LYV',   n:'Live Nation',          theme:'Events/Musik',   p:118.60,  c:0.7,  stage:2, rs:76, dist:-9,  vol:1.2 },
+  { sid:'COM', t:'CMCSA', n:'Comcast',              theme:'Kabel/Medien',   p:38.70,   c:-0.2, stage:1, rs:52, dist:-18, vol:0.7 },
+  { sid:'COM', t:'CHTR',  n:'Charter Comm.',        theme:'Kabel/Internet', p:298.50,  c:0.3,  stage:1, rs:55, dist:-22, vol:0.7 },
+  { sid:'COM', t:'WBD',   n:'Warner Bros. Discovery',theme:'Streaming/TV', p:9.80,    c:-0.6, stage:4, rs:33, dist:-44, vol:1.1 },
+  { sid:'COM', t:'NWSA',  n:'News Corp',            theme:'Medien',         p:28.40,   c:0.1,  stage:1, rs:58, dist:-12, vol:0.6 },
+  { sid:'COM', t:'MTCH',  n:'Match Group',          theme:'Dating Apps',    p:8.90,    c:-1.1, stage:4, rs:26, dist:-62, vol:1.0 },
+  { sid:'COM', t:'IAC',   n:'IAC Inc.',             theme:'Digital Media',  p:48.30,   c:0.4,  stage:1, rs:60, dist:-20, vol:0.8 },
+];
 ];
 
 // ═══════════════════════════════════════════
@@ -1317,6 +1504,140 @@ function rsColor(rs) {
   if (rs >= 60) return '#f5c842';
   if (rs >= 45) return '#f07840';
   return '#f03a5f';
+}
+
+
+// ═══════════════════════════════════════════
+// PERSOENLICHE WATCHLIST
+// ═══════════════════════════════════════════
+const MY_WL_KEY = 'my_watchlist_v2';
+
+function getMyWatchlist() {
+  try { return JSON.parse(localStorage.getItem(MY_WL_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveMyWatchlist(list) { localStorage.setItem(MY_WL_KEY, JSON.stringify(list)); }
+
+function addToMyWatchlist(ticker) {
+  ticker = ticker.trim().toUpperCase().replace(/[^A-Z.]/g,'');
+  if (!ticker) return;
+  const list = getMyWatchlist();
+  if (list.find(x => x.ticker === ticker)) { showToast('\u26a0\ufe0f ' + ticker + ' bereits in Watchlist'); return; }
+  const known = STOCKS.find(s => s.t === ticker);
+  list.push({ ticker, name: known?.n || ticker, sid: known?.sid || 'CUST', addedAt: Date.now(), custom: !known });
+  saveMyWatchlist(list);
+  showToast('\u2705 ' + ticker + ' hinzugef\u00fcgt!');
+  renderMyWatchlist();
+  if (STATE.apiKey) fetchSinglePrice(ticker);
+  document.getElementById('my-wl-input').value = '';
+}
+
+function removeFromMyWatchlist(ticker) {
+  saveMyWatchlist(getMyWatchlist().filter(x => x.ticker !== ticker));
+  showToast('\uD83D\uDDD1 ' + ticker + ' entfernt');
+  renderMyWatchlist();
+}
+
+async function fetchSinglePrice(ticker) {
+  if (!STATE.apiKey) return;
+  try {
+    const res = await fetch('https://finnhub.io/api/v1/quote?symbol=' + encodeURIComponent(ticker) + '&token=' + STATE.apiKey);
+    const data = await res.json();
+    if (data?.c > 0) {
+      STATE.prices[ticker] = { c:data.c, o:data.o, h:data.h, l:data.l, pc:data.pc,
+        chg:data.c-data.pc, chgPct:data.pc>0?((data.c-data.pc)/data.pc*100):0, t:data.t };
+      renderMyWatchlist();
+    }
+  } catch(e) {}
+}
+
+function checkSignals(ticker) {
+  const s = STOCKS.find(x => x.t === ticker);
+  const live = STATE.prices[ticker];
+  const sigs = [];
+  if (s) {
+    if (s.stage===2)       sigs.push({type:'bull', text:'Stage 2 \u2014 idealer Uptrend (SEPA)'});
+    if (s.rs>=90)          sigs.push({type:'bull', text:'RS '+s.rs+' \u2014 Top-Relative-St\u00e4rke'});
+    else if (s.rs>=80)     sigs.push({type:'bull', text:'RS '+s.rs+' \u2014 Starke RS'});
+    if (s.vol>=2.0)        sigs.push({type:'bull', text:'Vol '+s.vol+'x \uD83D\uDD25 Starker Surge'});
+    else if (s.vol>=1.5)   sigs.push({type:'watch',text:'Vol '+s.vol+'x \u2014 Vol-Surge aktiv'});
+    if (s.dist>=-10)       sigs.push({type:'bull', text:'Nur '+s.dist+'% vom 52W-Hoch'});
+    if (s.stage===4)       sigs.push({type:'bear', text:'Stage 4 \u2014 Downtrend \u26a0\ufe0f'});
+    if (s.rs<50)           sigs.push({type:'bear', text:'RS '+s.rs+' \u2014 Schwache Relative St\u00e4rke'});
+    if (s.dist<-40)        sigs.push({type:'bear', text:s.dist+'% \u2014 Weit vom 52W-Hoch'});
+  }
+  if (live) {
+    if (live.chgPct>=3)    sigs.push({type:'bull', text:'+'+live.chgPct.toFixed(1)+'% heute \u2014 Starker Tag'});
+    else if(live.chgPct<=-3) sigs.push({type:'bear',text:live.chgPct.toFixed(1)+'% \u2014 Schwacher Tag'});
+    if (live.c>live.o&&live.c>live.pc) sigs.push({type:'bull',text:'Kurs \u00fcber Er\u00f6ffnung & Vortag'});
+  }
+  if (sigs.length===0) sigs.push({type:'neut',text:'Keine klaren Signale \u2014 weitere Daten n\u00f6tig'});
+  return sigs;
+}
+
+function renderMyWatchlist() {
+  const container = document.getElementById('my-wl-body');
+  if (!container) return;
+  const list = getMyWatchlist();
+  // Update count badge
+  const badge = document.getElementById('mywl-count');
+  if (badge) badge.textContent = list.length;
+
+  if (list.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">\uD83D\uDC41</div><div class="empty-text">Noch keine Aktien.<br>Ticker oben eingeben und hinzuf\u00fcgen.</div></div>';
+    return;
+  }
+  container.innerHTML = '';
+  list.forEach(entry => {
+    const stock = STOCKS.find(s => s.t === entry.ticker);
+    const live  = STATE.prices[entry.ticker];
+    const sigs  = checkSignals(entry.ticker);
+    const priceStr = live ? '$'+live.c.toFixed(2) : (stock ? '$'+stock.p.toFixed(2) : '\u2013');
+    const chgStr   = live ? (live.chgPct>=0?'+':'')+live.chgPct.toFixed(2)+'%' : '\u2013';
+    const chgCls   = live ? (live.chgPct>0?'pos':live.chgPct<0?'neg':'zero') : '';
+    const secColor = stock?.sec?.color || '#6a8898';
+    const secAbbr  = stock?.sec?.abbr  || 'CUST';
+    const grade    = stock?.grade || '';
+    const gradeHtml = grade ? '<span class="setup-score score-'+grade+'" style="font-size:11px;width:26px;height:18px;margin-left:4px">'+grade+'</span>' : '';
+    const sigDots = sigs.slice(0,3).map(s=>'<div style="width:7px;height:7px;border-radius:50%;background:'+(s.type==='bull'?'var(--green)':s.type==='bear'?'var(--red)':s.type==='watch'?'var(--cyan)':'var(--yellow)')+'"></div>').join('');
+
+    const el = document.createElement('div');
+    el.style.cssText='background:var(--s1);border:1px solid var(--border);border-radius:14px;margin:0 16px 10px;overflow:hidden';
+    el.innerHTML =
+      '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer" onclick="toggleMyWlSigs(\'' + entry.ticker + '\')">' +
+        '<div style="width:38px;height:38px;border-radius:10px;background:'+secColor+'18;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:'+secColor+';flex-shrink:0">'+secAbbr+'</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:14px;font-weight:700;color:'+secColor+';display:flex;align-items:center;gap:6px">' + entry.ticker + (live?'<span style="font-size:9px;color:var(--green)">\u25CF</span>':'') + gradeHtml + '</div>' +
+          '<div style="font-size:11px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + entry.name + '</div>' +
+          '<div style="display:flex;gap:4px;margin-top:4px">' + sigDots + '</div>' +
+        '</div>' +
+        '<div style="text-align:right;flex-shrink:0">' +
+          '<div style="font-size:14px;font-weight:700">' + priceStr + '</div>' +
+          '<div style="font-size:12px;font-weight:700" class="' + chgCls + '">' + chgStr + '</div>' +
+        '</div>' +
+        '<div style="font-size:14px;color:var(--dim);margin-left:6px" id="mywl-arrow-'+entry.ticker+'">\u203a</div>' +
+      '</div>' +
+      '<div id="mywl-sig-' + entry.ticker + '" style="display:none;border-top:1px solid var(--border);padding:12px 14px">' +
+        '<div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--mid);text-transform:uppercase;margin-bottom:10px">\u25b8 SIGNALE</div>' +
+        sigs.map(s=>'<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px"><div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:'+(s.type==='bull'?'var(--green)':s.type==='bear'?'var(--red)':s.type==='watch'?'var(--cyan)':'var(--yellow)')+'"></div><span style="font-size:12px">'+s.text+'</span></div>').join('') +
+        (stock ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' +
+          ['Stage '+stock.stage,'RS '+stock.rs,stock.dist+'% 52W','Vol '+stock.vol+'x'].map(t=>'<span style="font-size:10px;padding:3px 8px;background:rgba(56,217,245,0.08);border:1px solid rgba(56,217,245,0.2);border-radius:6px;color:var(--cyan)">'+t+'</span>').join('') +
+          '</div>' : '') +
+        '<div style="display:flex;gap:8px;margin-top:12px">' +
+          (stock ? '<div onclick="showStock(STOCKS.find(s=>s.t===\''+entry.ticker+'\'))" style="flex:1;padding:9px;background:var(--s2);border:1px solid var(--border);border-radius:10px;text-align:center;font-size:12px;font-weight:700;color:var(--cyan);cursor:pointer">\uD83D\uDCCA Detail</div>' : '') +
+          '<div onclick="removeFromMyWatchlist(\''+entry.ticker+'\')" style="padding:9px 14px;background:rgba(240,58,95,0.08);border:1px solid rgba(240,58,95,0.2);border-radius:10px;text-align:center;font-size:12px;font-weight:700;color:var(--red);cursor:pointer">\uD83D\uDDD1</div>' +
+        '</div>' +
+      '</div>';
+    container.appendChild(el);
+  });
+}
+
+function toggleMyWlSigs(ticker) {
+  const el  = document.getElementById('mywl-sig-'+ticker);
+  const arr = document.getElementById('mywl-arrow-'+ticker);
+  if (!el) return;
+  const open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if (arr) arr.style.transform = open ? '' : 'rotate(90deg)';
 }
 
 // Enrich all stocks
@@ -2120,15 +2441,229 @@ function updateLastRefreshTime() {
 // ══════════════════════════════════════
 // NOTIFICATIONS
 // ══════════════════════════════════════
+// ══════════════════════════════════════
+// PUSH NOTIFICATION ENGINE
+// ══════════════════════════════════════
+
+const NOTIF_SETTINGS_KEY = 'notif_settings';
+
+function getNotifSettings() {
+  try {
+    return JSON.parse(localStorage.getItem(NOTIF_SETTINGS_KEY) || '{}');
+  } catch(e) { return {}; }
+}
+
+function saveNotifSettings(settings) {
+  localStorage.setItem(NOTIF_SETTINGS_KEY, JSON.stringify(settings));
+}
+
 async function requestNotifPermission() {
-  if ('Notification' in window) {
-    const perm = await Notification.requestPermission();
-    if (perm === 'granted') showToast('🔔 Benachrichtigungen aktiviert!');
+  if (!('Notification' in window)) {
+    showToast('⚠️ Notifications nicht unterstützt');
+    return false;
+  }
+  if (Notification.permission === 'granted') return true;
+  if (Notification.permission === 'denied') {
+    showToast('❌ Notifications blockiert — in iPhone Einstellungen aktivieren');
+    return false;
+  }
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    showToast('🔔 Benachrichtigungen aktiviert!');
+    scheduleAllNotifications();
+    return true;
+  }
+  showToast('⚠️ Notification-Berechtigung abgelehnt');
+  return false;
+}
+
+function sendLocalNotification(title, body, tag = 'trader', data = {}) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'SHOW_NOTIFICATION',
+        title, body, tag, data
+      });
+    } else {
+      new Notification(title, {
+        body,
+        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%2307090d"/><text y=".9em" font-size="80">📊</text></svg>',
+        tag,
+        data
+      });
+    }
+  } catch(e) {}
+}
+
+// ── PRICE ALERT CHECKER ──
+function checkPriceAlerts() {
+  if (!STATE.prices || !Object.keys(STATE.prices).length) return;
+  const settings = getNotifSettings();
+  if (!settings.priceAlerts) return;
+
+  // Check for big movers (>3%)
+  const bigMovers = STOCKS.filter(s => {
+    const live = STATE.prices[s.t];
+    return live && Math.abs(live.chgPct) >= 3;
+  });
+
+  if (bigMovers.length > 0) {
+    const top = bigMovers.sort((a,b) =>
+      Math.abs(STATE.prices[b.t].chgPct) - Math.abs(STATE.prices[a.t].chgPct)
+    )[0];
+    const live = STATE.prices[top.t];
+    const dir = live.chgPct > 0 ? '📈' : '📉';
+    sendLocalNotification(
+      `${dir} ${top.t} ${live.chgPct > 0 ? '+' : ''}${live.chgPct.toFixed(1)}%`,
+      `${top.n} bewegt sich stark — Minervini Score: ${top.grade}`,
+      'price-alert'
+    );
+  }
+
+  // Check for Score-A setups with volume surge
+  const hotSetups = STOCKS.filter(s => {
+    const live = STATE.prices[s.t];
+    return s.grade === 'A' && s.vol >= 2.0 && live && live.chgPct > 1.5;
+  });
+
+  if (hotSetups.length > 0 && settings.setupAlerts) {
+    const s = hotSetups[0];
+    sendLocalNotification(
+      `🎯 Score-A Setup: ${s.t}`,
+      `${s.n} — Stage ${s.stage}, RS ${s.rs}, Vol ${s.vol}x — Jetzt prüfen!`,
+      'setup-alert'
+    );
   }
 }
 
-// ══════════════════════════════════════
-// STOCK DETAIL (modal)
+// ── SCHEDULED DAILY BRIEFING ──
+function scheduleDailyBriefing() {
+  const settings = getNotifSettings();
+  if (!settings.dailyBriefing) return;
+
+  const now = new Date();
+  const target = new Date();
+  target.setHours(8, 0, 0, 0); // 8:00 Uhr
+
+  // If already past 8am, schedule for tomorrow
+  if (now > target) target.setDate(target.getDate() + 1);
+
+  const msUntil = target - now;
+
+  setTimeout(() => {
+    sendLocalNotification(
+      '📊 Tages-Briefing bereit',
+      `Markt öffnet bald — KI-Analyse verfügbar. Top Setup heute: ${getTopSetupToday()}`,
+      'daily-briefing'
+    );
+    scheduleDailyBriefing(); // reschedule for next day
+  }, msUntil);
+}
+
+function scheduleMarketClose() {
+  const settings = getNotifSettings();
+  if (!settings.dailyBriefing) return;
+
+  const now = new Date();
+  const target = new Date();
+  // NYSE closes 22:00 Uhr DE Zeit (16:00 ET + 6h)
+  target.setHours(22, 5, 0, 0);
+  if (now > target) target.setDate(target.getDate() + 1);
+
+  setTimeout(() => {
+    const topMovers = [...STOCKS]
+      .filter(s => STATE.prices[s.t])
+      .sort((a,b) => Math.abs(STATE.prices[b.t].chgPct) - Math.abs(STATE.prices[a.t].chgPct))
+      .slice(0, 3)
+      .map(s => `${s.t} ${STATE.prices[s.t].chgPct > 0 ? '+' : ''}${STATE.prices[s.t].chgPct.toFixed(1)}%`)
+      .join(' · ');
+
+    sendLocalNotification(
+      '🔔 Börsenschluss Summary',
+      topMovers || 'Tagesrückblick verfügbar — Briefing öffnen',
+      'market-close'
+    );
+    scheduleMarketClose();
+  }, target - now);
+}
+
+function getTopSetupToday() {
+  const top = [...STOCKS].sort((a,b) => b.score - a.score)[0];
+  return top ? `${top.t} (Score ${top.grade}, RS ${top.rs})` : 'Watchlist prüfen';
+}
+
+function scheduleAllNotifications() {
+  scheduleDailyBriefing();
+  scheduleMarketClose();
+  // Check price alerts every 5 min when app is open
+  setInterval(checkPriceAlerts, 300000);
+}
+
+// ── TRUMP-WATCH NOTIF ──
+async function checkTrumpAlert() {
+  const settings = getNotifSettings();
+  if (!settings.trumpWatch || !STATE.claudeKey) return;
+
+  const lastCheck = parseInt(localStorage.getItem('last_trump_check') || '0');
+  if (Date.now() - lastCheck < 3600000) return; // max once per hour
+
+  localStorage.setItem('last_trump_check', Date.now().toString());
+
+  const raw = await callClaude(
+    'Du bist ein Trump-Markt-Monitor. Antworte NUR mit JSON.',
+    `Ist heute (${new Date().toLocaleDateString('de-DE')}) etwas Marktrelevantes von Trump passiert? 
+Antworte: {"alert": true/false, "title": "kurz", "body": "1 Satz", "impact": "HOCH/MITTEL/NIEDRIG"}`,
+    200
+  );
+
+  if (!raw) return;
+  try {
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const data = JSON.parse(clean);
+    if (data.alert && data.impact !== 'NIEDRIG') {
+      sendLocalNotification(
+        `🇺🇸 Trump-Watch: ${data.title}`,
+        data.body,
+        'trump-alert'
+      );
+    }
+  } catch(e) {}
+}
+
+function toggleNotif(el) {
+  el.classList.toggle('on');
+  const isOn = el.classList.contains('on');
+
+  // Identify which setting this toggle controls
+  const item = el.closest('.setting-item');
+  const name = item?.querySelector('.setting-name')?.textContent || '';
+  const settings = getNotifSettings();
+
+  if (name.includes('Trump')) settings.trumpWatch = isOn;
+  else if (name.includes('Setup')) settings.setupAlerts = isOn;
+  else if (name.includes('Briefing')) settings.dailyBriefing = isOn;
+  else if (name.includes('Earnings')) settings.earningsAlerts = isOn;
+
+  saveNotifSettings(settings);
+
+  if (isOn) {
+    requestNotifPermission().then(granted => {
+      if (granted) scheduleAllNotifications();
+    });
+  }
+  showToast(isOn ? '🔔 Alert aktiviert' : '🔕 Alert deaktiviert');
+}
+
+// ── TEST NOTIFICATION ──
+function testNotification() {
+  sendLocalNotification(
+    '✅ Notifications funktionieren!',
+    'Minervini Trader sendet dir ab jetzt Alerts.',
+    'test'
+  );
+  showToast('📱 Test-Notification gesendet!');
+}
 // ══════════════════════════════════════
 function showStock(s) {
   const modal = document.getElementById('stock-modal');
@@ -2256,6 +2791,30 @@ function closeModal() {
 // ══════════════════════════════════════
 // TOAST
 // ══════════════════════════════════════
+function showTickerSuggestions(val) {
+  const box = document.getElementById('ticker-suggestions');
+  if (!box) return;
+  if (!val || val.length < 1) { box.innerHTML = ''; return; }
+  const matches = STOCKS
+    .filter(s => s.t.startsWith(val) || s.n.toUpperCase().includes(val))
+    .slice(0, 8);
+  if (matches.length === 0) { box.innerHTML = ''; return; }
+  box.innerHTML = matches.map(s =>
+    `<div onclick="document.getElementById('my-wl-input').value='${s.t}';showTickerSuggestions('');addToMyWatchlist('${s.t}')"
+      style="cursor:pointer;padding:4px 10px;background:var(--s2);border:1px solid var(--border);border-radius:8px;font-size:11px;font-weight:700;color:${s.sec.color};display:flex;align-items:center;gap:5px">
+      ${s.t} <span style="font-size:10px;color:var(--mid);font-weight:400">${s.n.substring(0,16)}</span>
+    </div>`
+  ).join('');
+}
+
+// Update header stats with live data
+function updateDashStats() {
+  const liveCount = Object.keys(STATE.prices).length;
+  if (liveCount === 0) return;
+  // Recalc sector heatmap with live data
+  renderDashboard();
+}
+
 function showToast(msg) {
   let t = document.getElementById('toast');
   if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
@@ -2293,32 +2852,102 @@ function installApp() {
 // INIT
 // ══════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-  // Register service worker
+
+  // ── Inline Service Worker (no external sw.js needed) ──
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    const swCode = `
+      self.addEventListener('install', e => self.skipWaiting());
+      self.addEventListener('activate', e => self.clients.claim());
+      self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
+      self.addEventListener('message', e => {
+        if (e.data?.type === 'SHOW_NOTIFICATION') {
+          e.waitUntil(self.registration.showNotification(e.data.title, {
+            body: e.data.body,
+            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%2307090d"/><text y=".9em" font-size="70" x="10">📊</text></svg>',
+            tag: e.data.tag || 'trader',
+            vibrate: [200, 100, 200],
+            data: e.data.data || {}
+          }));
+        }
+      });
+      self.addEventListener('notificationclick', e => {
+        e.notification.close();
+        e.waitUntil(clients.openWindow('/'));
+      });
+    `;
+    const blob = new Blob([swCode], { type: 'application/javascript' });
+    const swUrl = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl)
+      .then(reg => { console.log('SW registered'); })
+      .catch(e => { console.log('SW fallback:', e); });
   }
 
-  // Render all screens
+  // ── Render all screens ──
   renderDashboard();
   renderWatchlist();
   renderBriefing();
   renderAlerts();
   renderSettings();
+  renderMyWatchlist();
 
-  // Hide install banner on iOS (handled via Safari prompt)
+  // ── Notification status check ──
+  updateNotifStatusUI();
+
+  // ── iOS install banner ──
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  if (isIOS && !window.navigator.standalone) {
+  const isStandalone = window.navigator.standalone;
+  if (isIOS && !isStandalone) {
     const banner = document.getElementById('install-banner');
     if (banner) {
       banner.querySelector('.install-title').textContent = 'Als App installieren';
-      banner.querySelector('.install-sub').textContent = 'Tippe auf Teilen → "Zum Homescreen"';
+      banner.querySelector('.install-sub').textContent = 'Teilen → "Zum Homescreen" für Notifications';
       banner.style.display = 'flex';
     }
   }
 
-  // Load live prices if key exists
+  // ── Load live prices ──
   if (STATE.apiKey) fetchLivePrices();
+
+  // ── Schedule notifications if already granted ──
+  if (Notification.permission === 'granted') {
+    scheduleAllNotifications();
+    // Trump check every hour
+    setInterval(checkTrumpAlert, 3600000);
+  }
+
+  // ── Update date in briefing ──
+  const today = new Date().toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  const bdEl = document.getElementById('briefing-date');
+  if (bdEl) bdEl.textContent = '📅 ' + today;
 });
+
+function updateNotifStatusUI() {
+  const dot  = document.getElementById('notif-status-dot');
+  const text = document.getElementById('notif-status-text');
+  const sub  = document.getElementById('notif-status-sub');
+  if (!dot || !text) return;
+
+  const perm = 'Notification' in window ? Notification.permission : 'unsupported';
+
+  if (perm === 'granted') {
+    dot.style.background = 'var(--green)';
+    dot.style.boxShadow  = '0 0 6px var(--green)';
+    text.textContent = '✅ Notifications aktiv';
+    sub.textContent  = 'Alle Alerts werden zugestellt';
+  } else if (perm === 'denied') {
+    dot.style.background = 'var(--red)';
+    text.textContent = '❌ Notifications blockiert';
+    sub.textContent  = 'iPhone Einstellungen → Safari → Notifications';
+  } else if (perm === 'unsupported') {
+    dot.style.background = 'var(--dim)';
+    text.textContent = '⚠️ Nicht unterstützt';
+    sub.textContent  = 'iOS 16.4+ und Homescreen-App erforderlich';
+  } else {
+    dot.style.background = 'var(--yellow)';
+    text.textContent = '⏳ Berechtigung ausstehend';
+    sub.textContent  = 'Tippe AKTIVIEREN um zu erlauben';
+  }
+}
 </script>
 </body>
 </html>
